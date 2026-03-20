@@ -78,39 +78,39 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| IMG-01 | — | Pending |
-| IMG-02 | — | Pending |
-| IMG-03 | — | Pending |
-| IMG-04 | — | Pending |
-| IMG-05 | — | Pending |
-| IMG-06 | — | Pending |
-| CAL-01 | — | Pending |
-| CAL-02 | — | Pending |
-| CAL-03 | — | Pending |
-| CAL-04 | — | Pending |
-| CAL-05 | — | Pending |
-| CAL-06 | — | Pending |
-| CAL-07 | — | Pending |
-| PAINT-01 | — | Pending |
-| PAINT-02 | — | Pending |
-| PAINT-03 | — | Pending |
-| PAINT-04 | — | Pending |
-| PAINT-05 | — | Pending |
-| PAINT-06 | — | Pending |
-| PAINT-07 | — | Pending |
-| PAINT-08 | — | Pending |
-| CFG-01 | — | Pending |
-| CFG-02 | — | Pending |
-| CFG-03 | — | Pending |
-| CFG-04 | — | Pending |
-| CFG-05 | — | Pending |
-| CFG-06 | — | Pending |
+| IMG-01 | Phase 1 | Pending |
+| IMG-02 | Phase 1 | Pending |
+| IMG-03 | Phase 1 | Pending |
+| IMG-04 | Phase 1 | Pending |
+| IMG-05 | Phase 1 | Pending |
+| IMG-06 | Phase 1 | Pending |
+| CAL-01 | Phase 1 | Pending |
+| CAL-02 | Phase 1 | Pending |
+| CAL-03 | Phase 3 | Pending |
+| CAL-04 | Phase 1 | Pending |
+| CAL-05 | Phase 1 | Pending |
+| CAL-06 | Phase 2 | Pending |
+| CAL-07 | Phase 2 | Pending |
+| PAINT-01 | Phase 2 | Pending |
+| PAINT-02 | Phase 2 | Pending |
+| PAINT-03 | Phase 2 | Pending |
+| PAINT-04 | Phase 2 | Pending |
+| PAINT-05 | Phase 2 | Pending |
+| PAINT-06 | Phase 2 | Pending |
+| PAINT-07 | Phase 2 | Pending |
+| PAINT-08 | Phase 2 | Pending |
+| CFG-01 | Phase 1 | Pending |
+| CFG-02 | Phase 3 | Pending |
+| CFG-03 | Phase 3 | Pending |
+| CFG-04 | Phase 3 | Pending |
+| CFG-05 | Phase 1 | Pending |
+| CFG-06 | Phase 1 | Pending |
 
 **Coverage:**
 - v1 requirements: 27 total
-- Mapped to phases: 0
-- Unmapped: 27 ⚠️
+- Mapped to phases: 27
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-19*
-*Last updated: 2026-03-19 after initial definition*
+*Last updated: 2026-03-19 after roadmap creation*
