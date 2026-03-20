@@ -23,7 +23,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Depends on**: Nothing (first phase)
 **Requirements**: IMG-01, IMG-02, IMG-03, IMG-04, IMG-05, IMG-06, CAL-01, CAL-02, CAL-04, CAL-05, CFG-01, CFG-05, CFG-06
 **Success Criteria** (what must be TRUE):
-  1. User runs the tool with a PNG path and sees an OpenCV window showing the detected contours overlaid on the image
+  1. User runs the tool with a PNG path and sees an OpenCV window showing the detected contours on a black canvas with rainbow gradient coloring
   2. User can press Esc in the preview window to abort without any mouse movement occurring
   3. After proceeding from preview, user clicks two screen points in the terminal and sees the captured bounding box coordinates printed for confirmation
   4. On a pure Wayland session (no XWayland), the tool exits immediately with a clear error message explaining the X11 requirement
