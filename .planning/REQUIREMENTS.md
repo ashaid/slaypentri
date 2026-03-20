@@ -9,12 +9,12 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Image Processing
 
-- [ ] **IMG-01**: User can load any PNG and have it converted to grayscale automatically
-- [ ] **IMG-02**: Tool runs Canny edge detection with configurable low/high thresholds and blur kernel size
-- [ ] **IMG-03**: Tool provides Otsu-based auto-threshold as a fallback when thresholds set to "auto"
-- [ ] **IMG-04**: Tool extracts ordered contour polylines from the edge map
-- [ ] **IMG-05**: Tool filters out contours below a configurable minimum arc-length
-- [ ] **IMG-06**: Tool simplifies contour points using Douglas-Peucker with configurable epsilon
+- [x] **IMG-01**: User can load any PNG and have it converted to grayscale automatically
+- [x] **IMG-02**: Tool runs Canny edge detection with configurable low/high thresholds and blur kernel size
+- [x] **IMG-03**: Tool provides Otsu-based auto-threshold as a fallback when thresholds set to "auto"
+- [x] **IMG-04**: Tool extracts ordered contour polylines from the edge map
+- [x] **IMG-05**: Tool filters out contours below a configurable minimum arc-length
+- [x] **IMG-06**: Tool simplifies contour points using Douglas-Peucker with configurable epsilon
 
 ### Preview & Calibration
 
@@ -39,12 +39,12 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Configuration & Docs
 
-- [ ] **CFG-01**: All parameters stored in a YAML config file with sensible defaults
+- [x] **CFG-01**: All parameters stored in a YAML config file with sensible defaults
 - [ ] **CFG-02**: Sample config file with annotated comments explaining each parameter
 - [ ] **CFG-03**: README with usage instructions, parameter documentation, and example workflow
 - [ ] **CFG-04**: Example PNG(s) included for testing
-- [ ] **CFG-05**: Tool detects Wayland-only sessions and fails with an actionable error message
-- [ ] **CFG-06**: pyautogui.PAUSE set to 0 at startup to avoid 0.1s default penalty
+- [x] **CFG-05**: Tool detects Wayland-only sessions and fails with an actionable error message
+- [x] **CFG-06**: pyautogui.PAUSE set to 0 at startup to avoid 0.1s default penalty
 
 ## v2 Requirements
 
@@ -78,12 +78,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| IMG-01 | Phase 1 | Pending |
-| IMG-02 | Phase 1 | Pending |
-| IMG-03 | Phase 1 | Pending |
-| IMG-04 | Phase 1 | Pending |
-| IMG-05 | Phase 1 | Pending |
-| IMG-06 | Phase 1 | Pending |
+| IMG-01 | Phase 1 | Complete |
+| IMG-02 | Phase 1 | Complete |
+| IMG-03 | Phase 1 | Complete |
+| IMG-04 | Phase 1 | Complete |
+| IMG-05 | Phase 1 | Complete |
+| IMG-06 | Phase 1 | Complete |
 | CAL-01 | Phase 1 | Pending |
 | CAL-02 | Phase 1 | Pending |
 | CAL-03 | Phase 3 | Pending |
@@ -99,12 +99,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PAINT-06 | Phase 2 | Pending |
 | PAINT-07 | Phase 2 | Pending |
 | PAINT-08 | Phase 2 | Pending |
-| CFG-01 | Phase 1 | Pending |
+| CFG-01 | Phase 1 | Complete |
 | CFG-02 | Phase 3 | Pending |
 | CFG-03 | Phase 3 | Pending |
 | CFG-04 | Phase 3 | Pending |
-| CFG-05 | Phase 1 | Pending |
-| CFG-06 | Phase 1 | Pending |
+| CFG-05 | Phase 1 | Complete |
+| CFG-06 | Phase 1 | Complete |
 
 **Coverage:**
 - v1 requirements: 27 total

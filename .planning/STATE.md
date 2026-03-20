@@ -2,16 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Phase 1 context gathered
-last_updated: "2026-03-20T05:17:05.803Z"
-last_activity: 2026-03-19 — Roadmap created
+status: unknown
+stopped_at: Completed 01-01-PLAN.md
+last_updated: "2026-03-20T21:46:24.937Z"
 progress:
   total_phases: 3
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_plans: 4
+  completed_plans: 1
 ---
 
 # Project State
@@ -21,16 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-19)
 
 **Core value:** Accurately trace detected contours as smooth, ordered mouse strokes within a user-defined screen bounding box
-**Current focus:** Phase 1 — Image Pipeline and Safety
+**Current focus:** Phase 01 — image-pipeline-and-safety
 
 ## Current Position
 
-Phase: 1 of 3 (Image Pipeline and Safety)
-Plan: 0 of ? in current phase
-Status: Ready to plan
-Last activity: 2026-03-19 — Roadmap created
-
-Progress: [░░░░░░░░░░] 0%
+Phase: 01 (image-pipeline-and-safety) — EXECUTING
+Plan: 2 of 4
 
 ## Performance Metrics
 
@@ -52,6 +46,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: —
 
 *Updated after each plan completion*
+| Phase 01 P01 | 3 | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -66,6 +61,8 @@ Recent decisions affecting current work:
 - [Init]: Esc hotkey for abort via pynput daemon thread — more intentional than mouse-corner failsafe
 - [Research]: pyautogui.PAUSE must be set to 0 at startup — default 0.1s makes tool 10–100x too slow
 - [Research]: Contour ordering (nearest-neighbor) required in Phase 2 — not polish, core quality requirement
+- [Phase 01]: All test files use try/except ImportError + pytestmark skipif so tests skip cleanly before painter.py exists — Wave 0 Nyquist compliance
+- [Phase 01]: test_normalize_contour_shape added to meet 12-test minimum acceptance criterion for test_image_pipeline.py
 
 ### Pending Todos
 
@@ -79,6 +76,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-20T05:17:05.801Z
-Stopped at: Phase 1 context gathered
-Resume file: .planning/phases/01-image-pipeline-and-safety/01-CONTEXT.md
+Last session: 2026-03-20T21:46:24.935Z
+Stopped at: Completed 01-01-PLAN.md
+Resume file: None
