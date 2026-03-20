@@ -1,12 +1,19 @@
+import io
 import numpy as np
 import pytest
+import threading
+from unittest.mock import MagicMock, patch, call
 
 try:
     from painter import (
         compute_draw_region,
         map_contour_to_screen,
         sort_contours_nearest_neighbor,
+        _DEFAULTS,
+        run_replay,
+        _print_progress,
     )
+    import painter as _painter_module
     PAINTER_AVAILABLE = True
 except ImportError:
     PAINTER_AVAILABLE = False
@@ -148,3 +155,133 @@ def test_sort_single_contour():
     result = sort_contours_nearest_neighbor([contour])
     assert len(result) == 1
     assert result[0].shape == contour.shape
+
+
+# === Config defaults ===
+
+def test_start_delay_default():
+    """CAL-07: _DEFAULTS["painting"]["start_delay"] == 3."""
+    assert _DEFAULTS["painting"]["start_delay"] == 3
+
+
+def test_inter_point_delay_default():
+    """PAINT-03: _DEFAULTS["painting"]["inter_point_delay"] == 0."""
+    assert _DEFAULTS["painting"]["inter_point_delay"] == 0
+
+
+# === run_replay tests (mocked pyautogui) ===
+
+def _make_replay_state(tmp_path, abort_flag=None):
+    """Helper: build a minimal AppState suitable for run_replay tests."""
+    from painter import AppState
+    import cv2
+
+    # Create a real 100x100 PNG so cv2.imread in run_replay gets valid dims
+    img_path = str(tmp_path / "replay_test.png")
+    cv2.imwrite(img_path, np.zeros((100, 100, 3), dtype=np.uint8))
+
+    state = AppState()
+    state.image_path = img_path
+    state.bbox = (100, 100, 500, 500)
+    state.config = {
+        "painting": {
+            "start_delay": 0,
+            "inter_stroke_delay": 0,
+            "inter_point_delay": 0,
+            "mouse_button": "right",
+        }
+    }
+    # Two small contours — each has 3 points so len >= 2
+    state.contours_normalized = [
+        np.array([[0.1, 0.1], [0.2, 0.2], [0.3, 0.3]], dtype=np.float32),
+        np.array([[0.5, 0.5], [0.6, 0.6], [0.7, 0.7]], dtype=np.float32),
+    ]
+    if abort_flag is not None:
+        state.abort_flag = abort_flag
+    return state
+
+
+def test_dry_run_skips_painting(tmp_path):
+    """PAINT-01: With dry_run=True, run_replay returns without calling mouseDown."""
+    state = _make_replay_state(tmp_path)
+    state.dry_run = True
+
+    mock_pyautogui = MagicMock()
+    with patch.object(_painter_module, "pyautogui", mock_pyautogui):
+        run_replay(state)
+
+    mock_pyautogui.mouseDown.assert_not_called()
+
+
+def test_mouseup_on_exception(tmp_path):
+    """PAINT-08: When moveTo raises, finally block still calls mouseUp."""
+    state = _make_replay_state(tmp_path)
+
+    mock_pyautogui = MagicMock()
+    mock_pyautogui.moveTo.side_effect = RuntimeError("simulated error")
+
+    with patch.object(_painter_module, "pyautogui", mock_pyautogui):
+        try:
+            run_replay(state)
+        except RuntimeError:
+            pass  # exception may propagate — that's fine
+
+    # mouseUp must have been called (in finally block)
+    assert mock_pyautogui.mouseUp.called, "mouseUp was not called after exception"
+
+
+def test_configurable_mouse_button(tmp_path):
+    """PAINT-02: button='left' in config flows through to mouseDown/mouseUp calls."""
+    state = _make_replay_state(tmp_path)
+    state.config["painting"]["mouse_button"] = "left"
+
+    mock_pyautogui = MagicMock()
+    with patch.object(_painter_module, "pyautogui", mock_pyautogui):
+        run_replay(state)
+
+    # Every mouseDown call must use button="left"
+    for c in mock_pyautogui.mouseDown.call_args_list:
+        assert c.kwargs.get("button") == "left" or (len(c.args) >= 3 and c.args[2] == "left"), \
+            f"mouseDown called with wrong button: {c}"
+    # mouseUp must also use button="left"
+    for c in mock_pyautogui.mouseUp.call_args_list:
+        assert c.kwargs.get("button") == "left" or (len(c.args) >= 1 and c.args[0] == "left"), \
+            f"mouseUp called with wrong button: {c}"
+
+
+def test_abort_flag_stops_replay(tmp_path):
+    """PAINT-06: abort_flag.set() before second contour — only first contour painted."""
+    state = _make_replay_state(tmp_path)
+
+    call_count = {"mouseDown": 0}
+
+    def counting_mousedown(x, y, button="left"):
+        call_count["mouseDown"] += 1
+        # Set abort after the first mouseDown so second contour is skipped
+        state.abort_flag.set()
+
+    mock_pyautogui = MagicMock()
+    mock_pyautogui.mouseDown.side_effect = counting_mousedown
+
+    with patch.object(_painter_module, "pyautogui", mock_pyautogui):
+        run_replay(state)
+
+    # Only 1 mouseDown call (first contour), second contour was skipped
+    assert call_count["mouseDown"] == 1, \
+        f"Expected 1 mouseDown (abort after first), got {call_count['mouseDown']}"
+
+
+def test_progress_output_format(tmp_path, capsys):
+    """PAINT-07: Captured stdout contains 'N/M strokes' and percentage pattern."""
+    state = _make_replay_state(tmp_path)
+
+    mock_pyautogui = MagicMock()
+    with patch.object(_painter_module, "pyautogui", mock_pyautogui):
+        run_replay(state)
+
+    captured = capsys.readouterr()
+    output = captured.out
+
+    # Progress bar should contain "strokes" and a percentage
+    assert "strokes" in output, f"Expected 'strokes' in output: {output!r}"
+    assert "%" in output, f"Expected '%' in output: {output!r}"
