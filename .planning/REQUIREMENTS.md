@@ -20,7 +20,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **CAL-01**: Tool displays detected contours in an OpenCV preview window before painting
 - [x] **CAL-02**: User can abort from preview (Esc) or proceed (any other key)
-- [ ] **CAL-03**: Preview shows contour count and estimated painting time
+- [x] **CAL-03**: Preview shows contour count and estimated painting time
 - [x] **CAL-04**: Terminal-guided capture mode: user clicks top-left then bottom-right to define canvas bounding box
 - [x] **CAL-05**: Tool displays captured bounding box coordinates for confirmation before proceeding
 - [x] **CAL-06**: Tool maps contour coordinates to screen space preserving aspect ratio (no stretching)
@@ -40,7 +40,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Configuration & Docs
 
 - [x] **CFG-01**: All parameters stored in a YAML config file with sensible defaults
-- [ ] **CFG-02**: Sample config file with annotated comments explaining each parameter
+- [x] **CFG-02**: Sample config file with annotated comments explaining each parameter
 - [x] **CFG-03**: README with usage instructions, parameter documentation, and example workflow
 - [x] **CFG-04**: Example PNG(s) included for testing
 - [x] **CFG-05**: Tool detects Wayland-only sessions and fails with an actionable error message
@@ -86,7 +86,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | IMG-06 | Phase 1 | Complete |
 | CAL-01 | Phase 1 | Complete |
 | CAL-02 | Phase 1 | Complete |
-| CAL-03 | Phase 3 | Pending |
+| CAL-03 | Phase 3 | Complete |
 | CAL-04 | Phase 1 | Complete |
 | CAL-05 | Phase 1 | Complete |
 | CAL-06 | Phase 2 | Complete |
@@ -100,7 +100,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PAINT-07 | Phase 2 | Complete |
 | PAINT-08 | Phase 2 | Complete |
 | CFG-01 | Phase 1 | Complete |
-| CFG-02 | Phase 3 | Pending |
+| CFG-02 | Phase 3 | Complete |
 | CFG-03 | Phase 3 | Complete |
 | CFG-04 | Phase 3 | Complete |
 | CFG-05 | Phase 1 | Complete |

@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 03-02-PLAN.md
-last_updated: "2026-03-20T23:58:01.760Z"
+stopped_at: Completed 03-ux-polish-and-docs/03-01-PLAN.md
+last_updated: "2026-03-20T23:58:14.034Z"
 progress:
   total_phases: 3
   completed_phases: 3
@@ -83,6 +83,8 @@ Recent decisions affecting current work:
 - [Phase 02-coordinate-mapping-and-replay]: bbox min/max normalization in compute_draw_region — click-corner order never matters (Rule 1 bug fix found during human verification)
 - [Phase 03-ux-polish-and-docs]: Example image generated programmatically with OpenCV — no external dependency, reproducible, 13 contours with default config
 - [Phase 03-ux-polish-and-docs]: README quick-start + reference style per D-04: concise sections, preview screenshot per D-05, all 10 config parameters in three grouped tables
+- [Phase 03-01]: estimate_painting_time placed in PREVIEW section before run_preview; reads actual config values (inter_point_delay, inter_stroke_delay, start_delay) for meaningful estimate
+- [Phase 03-01]: DEFAULT_CONFIG_CONTENT enhanced with value ranges for all 9 parameters; _DEFAULTS dict values unchanged
 
 ### Pending Todos
 
@@ -96,6 +98,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-20T23:57:49.829Z
-Stopped at: Completed 03-02-PLAN.md
+Last session: 2026-03-20T23:58:14.032Z
+Stopped at: Completed 03-ux-polish-and-docs/03-01-PLAN.md
 Resume file: None
