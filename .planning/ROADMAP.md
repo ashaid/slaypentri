@@ -61,7 +61,11 @@ Plans:
   2. A sample YAML config file with annotated comments for every parameter is included in the repo
   3. The README explains how to install dependencies, configure the tool, run it, and interpret common errors
   4. At least one example PNG is included so a new user can verify the tool works without sourcing their own image
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Time estimate in preview + config annotation enhancement (painter.py)
+- [ ] 03-02-PLAN.md — README with quick-start guide and config reference + example PNG
 
 ## Progress
 
@@ -72,4 +76,4 @@ Phases execute in numeric order: 1 → 2 → 3
 |-------|----------------|--------|-----------|
 | 1. Image Pipeline and Safety | 4/4 | Complete   | 2026-03-20 |
 | 2. Coordinate Mapping and Replay | 2/2 | Complete   | 2026-03-20 |
-| 3. UX Polish and Docs | 0/? | Not started | - |
+| 3. UX Polish and Docs | 0/2 | In progress | - |
