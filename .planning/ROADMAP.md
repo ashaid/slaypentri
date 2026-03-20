@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Image Pipeline and Safety** - Load PNG, detect edges, extract contours, preview result, calibrate canvas, wire abort — no mouse movement yet (completed 2026-03-20)
 - [x] **Phase 2: Coordinate Mapping and Replay** - Map contours to screen space and drive pyautogui to paint every stroke (completed 2026-03-20)
-- [ ] **Phase 3: UX Polish and Docs** - Time estimates, progress output, annotated config, README, and example files
+- [x] **Phase 3: UX Polish and Docs** - Time estimates, progress output, annotated config, README, and example files (completed 2026-03-20)
 
 ## Phase Details
 
@@ -61,11 +61,11 @@ Plans:
   2. A sample YAML config file with annotated comments for every parameter is included in the repo
   3. The README explains how to install dependencies, configure the tool, run it, and interpret common errors
   4. At least one example PNG is included so a new user can verify the tool works without sourcing their own image
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 03-01-PLAN.md — Time estimate in preview + config annotation enhancement (painter.py)
-- [ ] 03-02-PLAN.md — README with quick-start guide and config reference + example PNG
+- [x] 03-01-PLAN.md — Time estimate in preview + config annotation enhancement (painter.py)
+- [x] 03-02-PLAN.md — README with quick-start guide and config reference + example PNG
 
 ## Progress
 
@@ -76,4 +76,4 @@ Phases execute in numeric order: 1 → 2 → 3
 |-------|----------------|--------|-----------|
 | 1. Image Pipeline and Safety | 4/4 | Complete   | 2026-03-20 |
 | 2. Coordinate Mapping and Replay | 2/2 | Complete   | 2026-03-20 |
-| 3. UX Polish and Docs | 0/2 | In progress | - |
+| 3. UX Polish and Docs | 2/2 | Complete   | 2026-03-20 |

@@ -24,25 +24,25 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **CAL-04**: Terminal-guided capture mode: user clicks top-left then bottom-right to define canvas bounding box
 - [x] **CAL-05**: Tool displays captured bounding box coordinates for confirmation before proceeding
 - [x] **CAL-06**: Tool maps contour coordinates to screen space preserving aspect ratio (no stretching)
-- [ ] **CAL-07**: Configurable countdown delay before first stroke begins
+- [x] **CAL-07**: Configurable countdown delay before first stroke begins
 
 ### Painting & Control
 
-- [ ] **PAINT-01**: Tool replays each contour as right-click mouseDown → moveTo sequence → mouseUp
-- [ ] **PAINT-02**: Mouse button for strokes is configurable (default: right)
-- [ ] **PAINT-03**: Inter-point delay is configurable for stroke speed tuning
+- [x] **PAINT-01**: Tool replays each contour as right-click mouseDown → moveTo sequence → mouseUp
+- [x] **PAINT-02**: Mouse button for strokes is configurable (default: right)
+- [x] **PAINT-03**: Inter-point delay is configurable for stroke speed tuning
 - [x] **PAINT-04**: Contours are sorted by spatial proximity (nearest-neighbor) to minimize travel
 - [x] **PAINT-05**: Tool picks optimal start-point (closest endpoint) for each contour
-- [ ] **PAINT-06**: Esc hotkey aborts painting mid-stroke via background listener thread
-- [ ] **PAINT-07**: Tool prints stroke progress (N/M, percentage) to terminal during painting
-- [ ] **PAINT-08**: Tool calls mouseUp on all exit paths (normal, abort, exception)
+- [x] **PAINT-06**: Esc hotkey aborts painting mid-stroke via background listener thread
+- [x] **PAINT-07**: Tool prints stroke progress (N/M, percentage) to terminal during painting
+- [x] **PAINT-08**: Tool calls mouseUp on all exit paths (normal, abort, exception)
 
 ### Configuration & Docs
 
 - [x] **CFG-01**: All parameters stored in a YAML config file with sensible defaults
 - [ ] **CFG-02**: Sample config file with annotated comments explaining each parameter
-- [ ] **CFG-03**: README with usage instructions, parameter documentation, and example workflow
-- [ ] **CFG-04**: Example PNG(s) included for testing
+- [x] **CFG-03**: README with usage instructions, parameter documentation, and example workflow
+- [x] **CFG-04**: Example PNG(s) included for testing
 - [x] **CFG-05**: Tool detects Wayland-only sessions and fails with an actionable error message
 - [x] **CFG-06**: pyautogui.PAUSE set to 0 at startup to avoid 0.1s default penalty
 
@@ -90,19 +90,19 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CAL-04 | Phase 1 | Complete |
 | CAL-05 | Phase 1 | Complete |
 | CAL-06 | Phase 2 | Complete |
-| CAL-07 | Phase 2 | Pending |
-| PAINT-01 | Phase 2 | Pending |
-| PAINT-02 | Phase 2 | Pending |
-| PAINT-03 | Phase 2 | Pending |
+| CAL-07 | Phase 2 | Complete |
+| PAINT-01 | Phase 2 | Complete |
+| PAINT-02 | Phase 2 | Complete |
+| PAINT-03 | Phase 2 | Complete |
 | PAINT-04 | Phase 2 | Complete |
 | PAINT-05 | Phase 2 | Complete |
-| PAINT-06 | Phase 2 | Pending |
-| PAINT-07 | Phase 2 | Pending |
-| PAINT-08 | Phase 2 | Pending |
+| PAINT-06 | Phase 2 | Complete |
+| PAINT-07 | Phase 2 | Complete |
+| PAINT-08 | Phase 2 | Complete |
 | CFG-01 | Phase 1 | Complete |
 | CFG-02 | Phase 3 | Pending |
-| CFG-03 | Phase 3 | Pending |
-| CFG-04 | Phase 3 | Pending |
+| CFG-03 | Phase 3 | Complete |
+| CFG-04 | Phase 3 | Complete |
 | CFG-05 | Phase 1 | Complete |
 | CFG-06 | Phase 1 | Complete |
 
