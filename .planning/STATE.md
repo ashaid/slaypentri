@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-03-20T22:48:23.785Z"
+stopped_at: "Checkpoint: Task 2 (human-verify) of 02-02-PLAN.md"
+last_updated: "2026-03-20T22:53:31.427Z"
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 6
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # Project State
@@ -51,6 +51,7 @@ Plan: 2 of 2
 | Phase 01-image-pipeline-and-safety P03 | 4 | 2 tasks | 1 files |
 | Phase 01-image-pipeline-and-safety P04 | 25min | 3 tasks | 1 files |
 | Phase 02-coordinate-mapping-and-replay P01 | 2 | 1 tasks | 2 files |
+| Phase 02-coordinate-mapping-and-replay P02 | 3 | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,8 @@ Recent decisions affecting current work:
 - [Phase 01-image-pipeline-and-safety]: Lazy import pyautogui/pynput at module level via try/except: avoids Xlib crash before check_display_environment runs on Wayland-only sessions
 - [Phase 02-01]: compute_draw_region returns floats (not ints) — caller converts at map time to avoid accumulated rounding
 - [Phase 02-01]: Contour sort runs in normalized space before screen mapping — preserves float precision in O(n^2) distance loop
+- [Phase 02-coordinate-mapping-and-replay]: try/finally wraps entire painting loop to guarantee mouseUp on all exit paths including FailSafeException (PAINT-08)
+- [Phase 02-coordinate-mapping-and-replay]: Contour length filter applied pre-map (len<2 check in list comprehension) not inside try block to keep loop body clean
 
 ### Pending Todos
 
@@ -87,6 +90,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-20T22:48:23.782Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-03-20T22:53:31.426Z
+Stopped at: Checkpoint: Task 2 (human-verify) of 02-02-PLAN.md
 Resume file: None

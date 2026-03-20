@@ -13,7 +13,7 @@ Three phases deliver the tool from nothing to production-ready. Phase 1 builds t
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Image Pipeline and Safety** - Load PNG, detect edges, extract contours, preview result, calibrate canvas, wire abort — no mouse movement yet (completed 2026-03-20)
-- [ ] **Phase 2: Coordinate Mapping and Replay** - Map contours to screen space and drive pyautogui to paint every stroke
+- [x] **Phase 2: Coordinate Mapping and Replay** - Map contours to screen space and drive pyautogui to paint every stroke (completed 2026-03-20)
 - [ ] **Phase 3: UX Polish and Docs** - Time estimates, progress output, annotated config, README, and example files
 
 ## Phase Details
@@ -46,11 +46,11 @@ Plans:
   3. Pressing Esc during painting stops all mouse movement within one stroke and releases the mouse button before exiting
   4. The terminal prints stroke progress (e.g., "Stroke 42/200 — 21%") during painting
   5. On all exit paths — normal completion, Esc abort, and unhandled exception — mouseUp is called before the process ends
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [x] 02-01-PLAN.md — Wave 1: Coordinate mapping and contour sorting (compute_draw_region, map_contour_to_screen, sort_contours_nearest_neighbor + tests)
-- [ ] 02-02-PLAN.md — Wave 2: Replay engine with abort, progress, and main() wiring (run_replay, _start_abort_listener, _print_progress + human verify)
+- [x] 02-02-PLAN.md — Wave 2: Replay engine with abort, progress, and main() wiring (run_replay, _start_abort_listener, _print_progress + human verify)
 
 ### Phase 3: UX Polish and Docs
 **Goal**: The tool is usable by someone who has never run it — preview gives enough information to decide whether to proceed, and the repo contains everything needed to get started
@@ -71,5 +71,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Image Pipeline and Safety | 4/4 | Complete   | 2026-03-20 |
-| 2. Coordinate Mapping and Replay | 1/2 | In Progress|  |
+| 2. Coordinate Mapping and Replay | 2/2 | Complete   | 2026-03-20 |
 | 3. UX Polish and Docs | 0/? | Not started | - |
