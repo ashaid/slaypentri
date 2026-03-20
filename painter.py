@@ -461,6 +461,121 @@ def run_calibration(state: AppState) -> None:
         print(f"[DEBUG] Width: {x2 - x1}px, Height: {y2 - y1}px")
 
 
+# === COORDINATE MAPPING ===
+
+def compute_draw_region(bbox: tuple, img_w: int, img_h: int) -> tuple:
+    """CAL-06: Compute the letterboxed/pillarboxed draw region within bbox.
+
+    Preserves source image aspect ratio — no stretching or distortion (D-01, D-02, D-03).
+    The image fills the largest fitting axis; the shorter axis is centered with margins.
+
+    Args:
+        bbox: (x1, y1, x2, y2) screen pixel bounding box.
+        img_w: Source image width in pixels.
+        img_h: Source image height in pixels.
+
+    Returns:
+        (offset_x, offset_y, draw_w, draw_h) as floats.
+        Caller converts to int at point-mapping time to avoid accumulated rounding error.
+    """
+    bx1, by1, bx2, by2 = bbox
+    bbox_w = bx2 - bx1
+    bbox_h = by2 - by1
+    img_aspect = img_w / img_h
+
+    if bbox_w / img_aspect <= bbox_h:
+        # Width-constrained (letterbox): fill width, margins top/bottom
+        draw_w = float(bbox_w)
+        draw_h = draw_w / img_aspect
+    else:
+        # Height-constrained (pillarbox): fill height, margins left/right
+        draw_h = float(bbox_h)
+        draw_w = draw_h * img_aspect
+
+    # Center the draw area within the bbox
+    offset_x = bx1 + (bbox_w - draw_w) / 2
+    offset_y = by1 + (bbox_h - draw_h) / 2
+    return offset_x, offset_y, draw_w, draw_h
+
+
+def map_contour_to_screen(
+    norm_contour: np.ndarray,
+    offset_x: float,
+    offset_y: float,
+    draw_w: float,
+    draw_h: float,
+) -> np.ndarray:
+    """CAL-06: Convert (N, 2) normalized [0, 1] contour to (N, 2) integer screen pixels.
+
+    screen[:,0] = int(offset_x + norm[:,0] * draw_w)   # x (horizontal)
+    screen[:,1] = int(offset_y + norm[:,1] * draw_h)   # y (vertical)
+
+    Args:
+        norm_contour: (N, 2) float32 array with x in column 0, y in column 1, values in [0, 1].
+        offset_x: Left edge of the draw region in screen pixels (from compute_draw_region).
+        offset_y: Top edge of the draw region in screen pixels (from compute_draw_region).
+        draw_w: Width of the draw region in screen pixels (from compute_draw_region).
+        draw_h: Height of the draw region in screen pixels (from compute_draw_region).
+
+    Returns:
+        (N, 2) int32 array of screen pixel coordinates.
+    """
+    screen = np.empty(norm_contour.shape, dtype=np.int32)
+    screen[:, 0] = (offset_x + norm_contour[:, 0] * draw_w).astype(np.int32)
+    screen[:, 1] = (offset_y + norm_contour[:, 1] * draw_h).astype(np.int32)
+    return screen
+
+
+def sort_contours_nearest_neighbor(contours: list) -> list:
+    """PAINT-04, PAINT-05: Greedy nearest-neighbor sort starting from (0, 0) in normalized space.
+
+    Starts from top-left of normalized space (0.0, 0.0), which maps to bbox top-left (D-08).
+    For each remaining contour, measures squared euclidean distance to both endpoints.
+    Picks the contour with the closest endpoint; reverses the contour if the far end is closer
+    (so painting always starts from the nearer endpoint, halving average travel — D-09).
+    Updates cursor position to the last painted point of each chosen contour.
+
+    Time complexity: O(n^2) — acceptable for n < 5,000 contours (PAINT-04).
+
+    Args:
+        contours: List of (N, 2) float32 numpy arrays in normalized [0, 1] space.
+
+    Returns:
+        New sorted list of (N, 2) float32 arrays; originals are not mutated.
+    """
+    if not contours:
+        return []
+
+    remaining = list(contours)
+    sorted_out = []
+    # Start from top-left of normalized space (maps to bbox top-left after coordinate transform)
+    cx, cy = 0.0, 0.0
+
+    while remaining:
+        best_idx = 0
+        best_dist = float("inf")
+        best_reversed = False
+
+        for i, c in enumerate(remaining):
+            # Squared distance to first and last points (no sqrt needed — comparison only)
+            d_start = (c[0, 0] - cx) ** 2 + (c[0, 1] - cy) ** 2
+            d_end = (c[-1, 0] - cx) ** 2 + (c[-1, 1] - cy) ** 2
+            d = min(d_start, d_end)
+            if d < best_dist:
+                best_dist = d
+                best_idx = i
+                best_reversed = d_end < d_start
+
+        chosen = remaining.pop(best_idx)
+        if best_reversed:
+            chosen = chosen[::-1]  # paint from the closer endpoint
+        sorted_out.append(chosen)
+        # Update cursor to the last painted point of this contour
+        cx, cy = float(chosen[-1, 0]), float(chosen[-1, 1])
+
+    return sorted_out
+
+
 # === MAIN ===
 
 def main() -> None:
