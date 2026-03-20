@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 01-02-PLAN.md
-last_updated: "2026-03-20T21:50:02.438Z"
+stopped_at: Completed 01-03-PLAN.md
+last_updated: "2026-03-20T21:56:07.999Z"
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 4
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 ## Current Position
 
 Phase: 01 (image-pipeline-and-safety) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 
 ## Performance Metrics
 
@@ -48,6 +48,7 @@ Plan: 3 of 4
 *Updated after each plan completion*
 | Phase 01 P01 | 3 | 3 tasks | 5 files |
 | Phase 01 P02 | 7 | 2 tasks | 1 files |
+| Phase 01-image-pipeline-and-safety P03 | 4 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -65,6 +66,9 @@ Recent decisions affecting current work:
 - [Phase 01]: All test files use try/except ImportError + pytestmark skipif so tests skip cleanly before painter.py exists — Wave 0 Nyquist compliance
 - [Phase 01]: test_normalize_contour_shape added to meet 12-test minimum acceptance criterion for test_image_pipeline.py
 - [Phase 01]: Added tkinter-absent guard for pyautogui import: patches mouseinfo stub before pyautogui import in headless environments where tkinter is unavailable
+- [Phase 01-image-pipeline-and-safety]: RETR_LIST over RETR_EXTERNAL: preserves inner contours for line art (letter holes, enclosed regions)
+- [Phase 01-image-pipeline-and-safety]: approxPolyDP runs in pixel space before normalization so simplify_epsilon stays intuitive in px units
+- [Phase 01-image-pipeline-and-safety]: Intercept 'auto' sentinel in run_image_pipeline before cv2.Canny — not at config-load time
 
 ### Pending Todos
 
@@ -78,6 +82,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-20T21:50:02.437Z
-Stopped at: Completed 01-02-PLAN.md
+Last session: 2026-03-20T21:56:07.997Z
+Stopped at: Completed 01-03-PLAN.md
 Resume file: None
