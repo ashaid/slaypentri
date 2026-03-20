@@ -18,11 +18,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Preview & Calibration
 
-- [ ] **CAL-01**: Tool displays detected contours in an OpenCV preview window before painting
-- [ ] **CAL-02**: User can abort from preview (Esc) or proceed (any other key)
+- [x] **CAL-01**: Tool displays detected contours in an OpenCV preview window before painting
+- [x] **CAL-02**: User can abort from preview (Esc) or proceed (any other key)
 - [ ] **CAL-03**: Preview shows contour count and estimated painting time
-- [ ] **CAL-04**: Terminal-guided capture mode: user clicks top-left then bottom-right to define canvas bounding box
-- [ ] **CAL-05**: Tool displays captured bounding box coordinates for confirmation before proceeding
+- [x] **CAL-04**: Terminal-guided capture mode: user clicks top-left then bottom-right to define canvas bounding box
+- [x] **CAL-05**: Tool displays captured bounding box coordinates for confirmation before proceeding
 - [ ] **CAL-06**: Tool maps contour coordinates to screen space preserving aspect ratio (no stretching)
 - [ ] **CAL-07**: Configurable countdown delay before first stroke begins
 
@@ -84,11 +84,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | IMG-04 | Phase 1 | Complete |
 | IMG-05 | Phase 1 | Complete |
 | IMG-06 | Phase 1 | Complete |
-| CAL-01 | Phase 1 | Pending |
-| CAL-02 | Phase 1 | Pending |
+| CAL-01 | Phase 1 | Complete |
+| CAL-02 | Phase 1 | Complete |
 | CAL-03 | Phase 3 | Pending |
-| CAL-04 | Phase 1 | Pending |
-| CAL-05 | Phase 1 | Pending |
+| CAL-04 | Phase 1 | Complete |
+| CAL-05 | Phase 1 | Complete |
 | CAL-06 | Phase 2 | Pending |
 | CAL-07 | Phase 2 | Pending |
 | PAINT-01 | Phase 2 | Pending |

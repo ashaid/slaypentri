@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 01-03-PLAN.md
-last_updated: "2026-03-20T21:56:07.999Z"
+stopped_at: Completed 01-04-PLAN.md
+last_updated: "2026-03-20T22:11:15.008Z"
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
 ---
 
 # Project State
@@ -49,6 +49,7 @@ Plan: 4 of 4
 | Phase 01 P01 | 3 | 3 tasks | 5 files |
 | Phase 01 P02 | 7 | 2 tasks | 1 files |
 | Phase 01-image-pipeline-and-safety P03 | 4 | 2 tasks | 1 files |
+| Phase 01-image-pipeline-and-safety P04 | 25min | 3 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -69,6 +70,7 @@ Recent decisions affecting current work:
 - [Phase 01-image-pipeline-and-safety]: RETR_LIST over RETR_EXTERNAL: preserves inner contours for line art (letter holes, enclosed regions)
 - [Phase 01-image-pipeline-and-safety]: approxPolyDP runs in pixel space before normalization so simplify_epsilon stays intuitive in px units
 - [Phase 01-image-pipeline-and-safety]: Intercept 'auto' sentinel in run_image_pipeline before cv2.Canny — not at config-load time
+- [Phase 01-image-pipeline-and-safety]: Lazy import pyautogui/pynput at module level via try/except: avoids Xlib crash before check_display_environment runs on Wayland-only sessions
 
 ### Pending Todos
 
@@ -82,6 +84,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-20T21:56:07.997Z
-Stopped at: Completed 01-03-PLAN.md
+Last session: 2026-03-20T22:11:15.007Z
+Stopped at: Completed 01-04-PLAN.md
 Resume file: None

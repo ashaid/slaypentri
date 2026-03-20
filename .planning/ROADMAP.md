@@ -12,7 +12,7 @@ Three phases deliver the tool from nothing to production-ready. Phase 1 builds t
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Image Pipeline and Safety** - Load PNG, detect edges, extract contours, preview result, calibrate canvas, wire abort — no mouse movement yet
+- [x] **Phase 1: Image Pipeline and Safety** - Load PNG, detect edges, extract contours, preview result, calibrate canvas, wire abort — no mouse movement yet (completed 2026-03-20)
 - [ ] **Phase 2: Coordinate Mapping and Replay** - Map contours to screen space and drive pyautogui to paint every stroke
 - [ ] **Phase 3: UX Polish and Docs** - Time estimates, progress output, annotated config, README, and example files
 
@@ -28,13 +28,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. After proceeding from preview, user clicks two screen points in the terminal and sees the captured bounding box coordinates printed for confirmation
   4. On a pure Wayland session (no XWayland), the tool exits immediately with a clear error message explaining the X11 requirement
   5. All tunable parameters (Canny thresholds, blur, arc-length filter, epsilon) are read from a YAML config file; missing keys fall back to defaults
-**Plans:** 3/4 plans executed
+**Plans:** 4/4 plans complete
 
 Plans:
 - [x] 01-01-PLAN.md — Wave 0: Test scaffold (conftest, test_config, test_safety, test_image_pipeline, requirements.txt)
 - [x] 01-02-PLAN.md — Wave 1: painter.py foundation (AppState, config loader, Wayland detection, CLI, main skeleton)
 - [x] 01-03-PLAN.md — Wave 2: Image processing pipeline (load, grayscale, blur, Canny, contours, filter, simplify, normalize)
-- [ ] 01-04-PLAN.md — Wave 3: Preview window + calibration flow (OpenCV preview with rainbow gradient, pynput click capture)
+- [x] 01-04-PLAN.md — Wave 3: Preview window + calibration flow (OpenCV preview with rainbow gradient, pynput click capture)
 
 ### Phase 2: Coordinate Mapping and Replay
 **Goal**: User can run the tool end-to-end and have contours painted onto the target screen region as mouse strokes
@@ -66,6 +66,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Image Pipeline and Safety | 3/4 | In Progress|  |
+| 1. Image Pipeline and Safety | 4/4 | Complete   | 2026-03-20 |
 | 2. Coordinate Mapping and Replay | 0/? | Not started | - |
 | 3. UX Polish and Docs | 0/? | Not started | - |
