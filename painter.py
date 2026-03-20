@@ -189,7 +189,66 @@ def parse_cli(state: AppState) -> None:
         state.config_path = os.path.join(script_dir, "config.yaml")
 
 
-# === IMAGE PIPELINE (stubs — implemented in Plan 03) ===
+# === IMAGE PIPELINE ===
+
+def load_image(path: str) -> np.ndarray:
+    """IMG-01: Load PNG from disk. Exits with clear error if file missing or unreadable."""
+    if not os.path.exists(path):
+        print(f"Error: Image file not found: {path}")
+        sys.exit(1)
+    img = cv2.imread(path)
+    if img is None:
+        print(f"Error: Could not read image (unsupported format or corrupted): {path}")
+        sys.exit(1)
+    return img
+
+
+def to_grayscale(img: np.ndarray) -> np.ndarray:
+    """IMG-01: Convert BGR image to single-channel grayscale."""
+    if img.ndim == 2:
+        return img  # already grayscale
+    return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+
+def compute_otsu_thresholds(blurred_gray: np.ndarray) -> tuple:
+    """IMG-03: Derive Canny thresholds from Otsu's method.
+
+    Standard ratio: low = 0.5 * otsu, high = otsu.
+    Source: https://pyimagesearch.com/2015/04/06/zero-parameter-automatic-canny-edge-detection-with-python-and-opencv/
+    """
+    otsu_thresh, _ = cv2.threshold(
+        blurred_gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU
+    )
+    high = float(otsu_thresh)
+    low = 0.5 * high
+    return low, high
+
+
+def normalize_contour(contour: np.ndarray, img_w: int, img_h: int) -> np.ndarray:
+    """IMG-06 + coordinate math: Convert pixel contour to normalized [0, 1] coordinates.
+
+    Input contour shape: (N, 1, 2) from findContours, or (N, 2) from approxPolyDP.
+    Output shape: (N, 2) float32 with values in [0.0, 1.0].
+
+    IMPORTANT: Must be called AFTER approxPolyDP (in pixel space) and BEFORE any drawing.
+    Squeeze axis=1 to handle the (N, 1, 2) case before math.
+    """
+    pts = contour.reshape(-1, 2).astype(np.float32)
+    pts[:, 0] = pts[:, 0] / img_w   # x / width
+    pts[:, 1] = pts[:, 1] / img_h   # y / height
+    return pts
+
+
+def contour_color_bgr(index: int, total: int) -> tuple:
+    """Preview rainbow gradient: hue 0 (red) to 240 (blue) across N contours.
+
+    Uses HSV->BGR conversion via OpenCV to avoid manual color math.
+    """
+    hue = int(240 * index / max(total - 1, 1))
+    hsv_pixel = np.uint8([[[hue, 255, 255]]])
+    bgr = cv2.cvtColor(hsv_pixel, cv2.COLOR_HSV2BGR)[0][0]
+    return int(bgr[0]), int(bgr[1]), int(bgr[2])
+
 
 def run_image_pipeline(state: AppState) -> None:
     """IMG-01..06: Placeholder — implemented in Plan 03."""
