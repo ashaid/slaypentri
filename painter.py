@@ -30,11 +30,25 @@ except ImportError:
     _mouseinfo_stub = _types.ModuleType("mouseinfo")
     sys.modules.setdefault("mouseinfo", _mouseinfo_stub)
 
-import pyautogui
-from pynput import mouse as pynput_mouse
+# CFG-05 / CFG-06: pyautogui connects to X display at import time on Linux.
+# If DISPLAY is unset (Wayland-only session), the import crashes with Xlib.error.DisplayNameError
+# BEFORE check_display_environment() ever runs. Wrap the import so the module can load cleanly;
+# check_display_environment() in main() will exit(1) before any pyautogui call is made.
+try:
+    import pyautogui
+    pyautogui.PAUSE = 0  # CFG-06: eliminate 0.1s default per-call penalty
+    _PYAUTOGUI_AVAILABLE = True
+except Exception:
+    pyautogui = None  # type: ignore[assignment]
+    _PYAUTOGUI_AVAILABLE = False
 
-# CFG-06: Set PAUSE to 0 immediately after import to avoid 0.1s default per-call penalty
-pyautogui.PAUSE = 0
+# pynput also connects to X at import time. Guard it the same way as pyautogui.
+try:
+    from pynput import mouse as pynput_mouse
+    _PYNPUT_AVAILABLE = True
+except Exception:
+    pynput_mouse = None  # type: ignore[assignment]
+    _PYNPUT_AVAILABLE = False
 
 
 # === CONFIGURATION ===
@@ -339,7 +353,10 @@ def run_preview(state: AppState) -> None:
         sys.exit(1)
 
     # Determine canvas dimensions: scale source image aspect ratio to fit 80% of screen
-    screen_w, screen_h = pyautogui.size()
+    # Lazy import: by the time run_preview is called, check_display_environment() has already
+    # confirmed DISPLAY is set, so this import is safe even if module-level import was skipped.
+    import pyautogui as _pyautogui
+    screen_w, screen_h = _pyautogui.size()
     max_canvas_w = int(screen_w * 0.8)
     max_canvas_h = int(screen_h * 0.8)
 
@@ -398,12 +415,15 @@ def capture_click_position(label: str, countdown: int = 3) -> tuple:
 
     click_pos = []
 
+    # Lazy import: safe here because check_display_environment() confirmed DISPLAY is set.
+    from pynput import mouse as _pynput_mouse
+
     def on_click(x, y, button, pressed):
         if pressed:
             click_pos.append((int(x), int(y)))
             return False  # returning False stops the listener
 
-    with pynput_mouse.Listener(on_click=on_click) as listener:
+    with _pynput_mouse.Listener(on_click=on_click) as listener:
         listener.join()
 
     return click_pos[0]
