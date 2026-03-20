@@ -58,20 +58,20 @@ DEFAULT_CONFIG_CONTENT = """\
 # All parameters have sensible defaults — edit to tune for your image.
 
 edge_detection:
-  blur_kernel_size: 5        # Gaussian blur kernel (must be odd). Higher = more noise reduction.
-  canny_low: 50              # Canny low threshold. Use "auto" for Otsu-based automatic selection.
-  canny_high: 150            # Canny high threshold. Use "auto" for Otsu-based automatic selection.
-  min_contour_px: 10         # Discard contours shorter than this (arc-length in image pixels).
-  simplify_epsilon: 1.5      # Douglas-Peucker epsilon in image pixels. Higher = fewer points.
+  blur_kernel_size: 5        # Gaussian blur kernel size (odd integer, 1-31). Higher = more noise reduction.
+  canny_low: 50              # Canny low threshold (0-255, or "auto" for Otsu-based). Lower = more edges detected.
+  canny_high: 150            # Canny high threshold (0-255, or "auto" for Otsu-based). Higher = fewer weak edges kept.
+  min_contour_px: 10         # Minimum contour arc-length in pixels (0+). Increase to discard small noise contours.
+  simplify_epsilon: 1.5      # Douglas-Peucker simplification in pixels (0.0-10.0). Higher = fewer points, coarser lines.
 
 calibration:
-  countdown_seconds: 3       # Seconds to count down before each calibration click capture.
+  countdown_seconds: 3       # Seconds before each calibration click (1-10). Time to position your cursor.
 
 painting:
   mouse_button: right        # Mouse button for strokes: "right" or "left".
-  inter_stroke_delay: 0.05   # Seconds between contour strokes (mouseUp -> mouseDown pause).
-  start_delay: 3              # Seconds to count down before painting begins.
-  inter_point_delay: 0        # Seconds between moveTo calls within a stroke (0 = fastest).
+  inter_stroke_delay: 0.05   # Seconds between strokes (0.0-1.0). Increase if target app drops strokes.
+  start_delay: 3             # Seconds countdown before painting begins (0-30).
+  inter_point_delay: 0       # Seconds between points within a stroke (0.0-0.1). 0 = fastest. Increase for slow apps.
 """
 
 # Default values as a nested dict (mirrors DEFAULT_CONFIG_CONTENT) for deep_merge
