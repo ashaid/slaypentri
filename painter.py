@@ -70,6 +70,8 @@ calibration:
 painting:
   mouse_button: right        # Mouse button for strokes: "right" or "left".
   inter_stroke_delay: 0.05   # Seconds between contour strokes (mouseUp -> mouseDown pause).
+  start_delay: 3              # Seconds to count down before painting begins.
+  inter_point_delay: 0        # Seconds between moveTo calls within a stroke (0 = fastest).
 """
 
 # Default values as a nested dict (mirrors DEFAULT_CONFIG_CONTENT) for deep_merge
@@ -87,6 +89,8 @@ _DEFAULTS = {
     "painting": {
         "mouse_button": "right",
         "inter_stroke_delay": 0.05,
+        "start_delay": 3,
+        "inter_point_delay": 0,
     },
 }
 
@@ -576,6 +580,131 @@ def sort_contours_nearest_neighbor(contours: list) -> list:
     return sorted_out
 
 
+# === REPLAY ENGINE ===
+
+def _print_progress(done: int, total: int, bar_width: int = 30) -> None:
+    """PAINT-07: Single-line inline progress overwrite using \\r.
+
+    Computes percentage, builds a filled/empty bar, and overwrites the current
+    terminal line in-place. Caller must print a newline after the loop exits
+    (Pitfall 7: progress bar leaves terminal in dirty state if no trailing newline).
+    """
+    pct = done / total if total > 0 else 1.0
+    filled = int(bar_width * pct)
+    bar = "#" * filled + "-" * (bar_width - filled)
+    print(f"\rPainting: {done}/{total} strokes ({pct:.0%}) [{bar}]", end="", flush=True)
+
+
+def _start_abort_listener(state: "AppState") -> None:
+    """PAINT-06: Start pynput keyboard daemon that sets abort_flag on Esc.
+
+    Lazy import matches Phase 1 pattern (capture_click_position).
+    Must be called AFTER run_preview (cv2.imshow must be on the main thread only).
+    Returning False from the callback stops the listener automatically.
+    """
+    from pynput import keyboard as _pynput_keyboard
+
+    def on_press(key):
+        if key == _pynput_keyboard.Key.esc:
+            state.abort_flag.set()
+            return False  # stops the listener
+
+    listener = _pynput_keyboard.Listener(on_press=on_press)
+    listener.daemon = True
+    listener.start()
+
+
+def run_replay(state: "AppState") -> None:
+    """PAINT-01, PAINT-02, PAINT-03, PAINT-06, PAINT-07, PAINT-08, CAL-06, CAL-07:
+    Drive pyautogui to paint sorted, screen-mapped contours as mouse strokes.
+
+    Entry point for the full painting session. Handles:
+    - dry_run bypass
+    - countdown before first stroke (CAL-07)
+    - Esc abort listener start (PAINT-06)
+    - nearest-neighbor contour sort (PAINT-04, PAINT-05)
+    - letterbox/pillarbox coordinate mapping (CAL-06)
+    - mouseDown -> moveTo sequence -> mouseUp per contour (PAINT-01)
+    - configurable mouse button and delays (PAINT-02, PAINT-03)
+    - inline progress reporting (PAINT-07)
+    - guaranteed mouseUp on ALL exit paths via try/finally (PAINT-08)
+    """
+    if state.dry_run:
+        print("Dry run: skipping painting.")
+        return
+
+    # CAL-06: read source image dimensions for aspect-ratio-preserving mapping
+    src_img = cv2.imread(state.image_path)
+    img_h, img_w = src_img.shape[:2]
+    offset_x, offset_y, draw_w, draw_h = compute_draw_region(state.bbox, img_w, img_h)
+
+    # PAINT-04, PAINT-05: sort contours in normalized space before screen mapping
+    sorted_contours = sort_contours_nearest_neighbor(state.contours_normalized)
+
+    # Map all contours to screen pixel arrays once (not per-stroke, Pitfall 5)
+    screen_contours = [
+        map_contour_to_screen(c, offset_x, offset_y, draw_w, draw_h)
+        for c in sorted_contours
+        if len(c) >= 2  # skip degenerate single-point contours
+    ]
+
+    # CAL-07: configurable countdown before first stroke
+    start_delay = state.config.get("painting", {}).get("start_delay", 3)
+    if start_delay > 0:
+        print(f"Painting starts in:", end="", flush=True)
+        for t in range(int(start_delay), 0, -1):
+            print(f" {t}...", end="", flush=True)
+            time.sleep(1)
+        print(" GO")
+
+    # PAINT-06: start Esc abort listener in daemon thread
+    _start_abort_listener(state)
+
+    total = len(screen_contours)
+    button = state.config.get("painting", {}).get("mouse_button", "right")
+    inter_stroke = state.config.get("painting", {}).get("inter_stroke_delay", 0.05)
+    inter_point = state.config.get("painting", {}).get("inter_point_delay", 0)
+
+    painted = 0
+    t_start = time.time()
+
+    # PAINT-08: try/finally guarantees mouseUp on crash, abort, or FailSafeException
+    try:
+        for i, pts in enumerate(screen_contours):
+            if state.abort_flag.is_set():
+                break
+
+            x0, y0 = int(pts[0, 0]), int(pts[0, 1])
+            pyautogui.mouseDown(x0, y0, button=button)
+
+            for pt in pts[1:]:
+                pyautogui.moveTo(int(pt[0]), int(pt[1]))
+                if inter_point > 0:
+                    time.sleep(inter_point)
+
+            pyautogui.mouseUp(button=button)
+            painted += 1
+
+            # PAINT-07: inline progress overwrite
+            _print_progress(painted, total)
+
+            # Pitfall 6: skip inter-stroke delay after the last stroke
+            if i < total - 1:
+                time.sleep(inter_stroke)
+
+    finally:
+        # PAINT-08: unconditional release — safe to call even if button not currently held
+        pyautogui.mouseUp(button=button)
+
+    elapsed = time.time() - t_start
+
+    # Pitfall 7: print newline to clear the \r progress line before final message
+    if state.abort_flag.is_set():
+        print(f"\nAborted after {painted}/{total} strokes.")
+    else:
+        print(f"\nDone. {painted} strokes in {elapsed:.1f}s.")
+
+
 # === MAIN ===
 
 def main() -> None:
@@ -585,10 +714,10 @@ def main() -> None:
     parse_cli(state)              # sets state.image_path, state.config_path, state.dry_run, state.verbose
     load_config(state)            # CFG-01: fills state.config; auto-generates config.yaml if absent
 
-    # Phase 1 stubs — filled in by Plans 03 and 04
     run_image_pipeline(state)     # IMG-01..06: fills state.contours_normalized
     run_preview(state)            # CAL-01, CAL-02: show window, proceed or abort
     run_calibration(state)        # CAL-04, CAL-05: fills state.bbox
+    run_replay(state)             # PAINT-01..08, CAL-06, CAL-07: paint contours via mouse
 
 
 if __name__ == "__main__":
