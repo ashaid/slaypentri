@@ -251,8 +251,68 @@ def contour_color_bgr(index: int, total: int) -> tuple:
 
 
 def run_image_pipeline(state: AppState) -> None:
-    """IMG-01..06: Placeholder — implemented in Plan 03."""
-    raise NotImplementedError("run_image_pipeline not yet implemented")
+    """IMG-01..06: Full image processing pipeline.
+
+    Steps (in order — order matters for correctness):
+      1. Load PNG (IMG-01)
+      2. Convert to grayscale (IMG-01)
+      3. Gaussian blur — must use odd kernel (IMG-02)
+      4. Canny edge detection — numeric or Otsu auto (IMG-02, IMG-03)
+      5. findContours with RETR_LIST + CHAIN_APPROX_NONE (IMG-04)
+      6. approxPolyDP simplification in PIXEL space — before normalization (IMG-06)
+      7. arcLength filter — after simplification, before normalization (IMG-05)
+      8. Normalize to [0, 1] per-contour (coordinate prep for Phase 2)
+    """
+    img = load_image(state.image_path)
+    if state.verbose:
+        print(f"[DEBUG] Loaded image: {state.image_path}, shape={img.shape}")
+
+    gray = to_grayscale(img)
+    h, w = gray.shape[:2]
+
+    blur_k = state.config["edge_detection"]["blur_kernel_size"]
+    # Guarantee odd kernel (OpenCV requirement: AssertionError if even)
+    if blur_k % 2 == 0:
+        blur_k += 1
+    blurred = cv2.GaussianBlur(gray, (blur_k, blur_k), 0)
+
+    low = state.config["edge_detection"]["canny_low"]
+    high = state.config["edge_detection"]["canny_high"]
+    # IMG-03: intercept "auto" string sentinel BEFORE passing to cv2.Canny
+    if low == "auto" or high == "auto":
+        low, high = compute_otsu_thresholds(blurred)
+        if state.verbose:
+            print(f"[DEBUG] Otsu thresholds: low={low:.1f}, high={high:.1f}")
+
+    edges = cv2.Canny(blurred, float(low), float(high))
+
+    # IMG-04: RETR_LIST keeps all contours (not just outer); CHAIN_APPROX_NONE keeps all points
+    raw_contours, _ = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+
+    epsilon = state.config["edge_detection"]["simplify_epsilon"]
+    min_len = state.config["edge_detection"]["min_contour_px"]
+
+    # IMG-06: Simplify in PIXEL space (epsilon is in pixels; must happen before normalize)
+    simplified = [
+        cv2.approxPolyDP(c, epsilon, closed=False)
+        for c in raw_contours
+    ]
+
+    # IMG-05: Filter by arc-length AFTER simplification
+    filtered = [
+        c for c in simplified
+        if cv2.arcLength(c, closed=False) >= min_len
+    ]
+
+    if state.verbose:
+        print(f"[DEBUG] Raw contours: {len(raw_contours)}, after filter: {len(filtered)}")
+
+    # Normalize each contour to [0, 1] coordinates for resolution-independent downstream use
+    state.contours_normalized = [
+        normalize_contour(c, w, h) for c in filtered
+    ]
+
+    print(f"Detected {len(state.contours_normalized)} contours.")
 
 
 # === PREVIEW / CALIBRATION (stubs — implemented in Plan 04) ===
