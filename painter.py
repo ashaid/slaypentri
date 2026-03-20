@@ -315,16 +315,130 @@ def run_image_pipeline(state: AppState) -> None:
     print(f"Detected {len(state.contours_normalized)} contours.")
 
 
-# === PREVIEW / CALIBRATION (stubs — implemented in Plan 04) ===
+# === PREVIEW ===
 
 def run_preview(state: AppState) -> None:
-    """CAL-01, CAL-02: Placeholder — implemented in Plan 04."""
-    raise NotImplementedError("run_preview not yet implemented")
+    """CAL-01, CAL-02: Show detected contours in an OpenCV window on a black canvas.
+
+    IMPORTANT: Must be called from the main thread. cv2.imshow/waitKey will fail or
+    produce a black window if called from any other thread.
+
+    Canvas sizing: scales to fit within 80% of screen resolution while preserving the
+    source image's aspect ratio.
+
+    Key behavior:
+      - Any key except Esc: proceed to calibration
+      - Esc (key == 27): print "Aborted by user." and sys.exit(0)
+    """
+    contours = state.contours_normalized
+    n = len(contours)
+
+    if n == 0:
+        print("No contours detected. Try lowering canny thresholds or increasing blur.")
+        print("Hint: Set canny_low: auto in config.yaml to use automatic thresholding.")
+        sys.exit(1)
+
+    # Determine canvas dimensions: scale source image aspect ratio to fit 80% of screen
+    screen_w, screen_h = pyautogui.size()
+    max_canvas_w = int(screen_w * 0.8)
+    max_canvas_h = int(screen_h * 0.8)
+
+    # Infer source aspect ratio from the loaded image dimensions
+    src_img = cv2.imread(state.image_path)
+    src_h, src_w = src_img.shape[:2] if src_img is not None else (1, 1)
+    aspect = src_w / src_h
+
+    # Fit within max_canvas dimensions preserving aspect ratio
+    if max_canvas_w / aspect <= max_canvas_h:
+        canvas_w = max_canvas_w
+        canvas_h = max(1, int(canvas_w / aspect))
+    else:
+        canvas_h = max_canvas_h
+        canvas_w = max(1, int(canvas_h * aspect))
+
+    canvas = np.zeros((canvas_h, canvas_w, 3), dtype=np.uint8)
+
+    for i, norm_pts in enumerate(contours):
+        color = contour_color_bgr(i, n)
+        # Scale normalized [0,1] coords to canvas pixel coords
+        pixel_pts = (norm_pts * np.array([canvas_w, canvas_h])).astype(np.int32)
+        # cv2.polylines requires shape (N, 1, 2)
+        cv2.polylines(canvas, [pixel_pts.reshape(-1, 1, 2)], isClosed=False, color=color, thickness=1)
+
+    print(f"Preview ready. {n} contours detected.")
+    print("Press any key to continue, Esc to abort.")
+
+    cv2.imshow("Contour Preview", canvas)
+    key = cv2.waitKey(0) & 0xFF
+    cv2.destroyAllWindows()
+
+    if key == 27:  # Esc
+        print("Aborted by user.")
+        sys.exit(0)
+
+    if state.verbose:
+        print(f"[DEBUG] Preview key pressed: {key}")
+
+
+# === CALIBRATION ===
+
+def capture_click_position(label: str, countdown: int = 3) -> tuple:
+    """CAL-04: Block until a mouse click is detected. Print countdown first.
+
+    Uses pynput mouse listener to capture the ACTUAL click position (not a snapshot
+    after sleep — those can drift from where user intended to click).
+
+    Returns: (x, y) tuple of integer screen coordinates.
+    """
+    print(f"Click {label} in:", end="", flush=True)
+    for t in range(countdown, 0, -1):
+        print(f" {t}...", end="", flush=True)
+        time.sleep(1)
+    print(" GO — click now.")
+
+    click_pos = []
+
+    def on_click(x, y, button, pressed):
+        if pressed:
+            click_pos.append((int(x), int(y)))
+            return False  # returning False stops the listener
+
+    with pynput_mouse.Listener(on_click=on_click) as listener:
+        listener.join()
+
+    return click_pos[0]
 
 
 def run_calibration(state: AppState) -> None:
-    """CAL-04, CAL-05: Placeholder — implemented in Plan 04."""
-    raise NotImplementedError("run_calibration not yet implemented")
+    """CAL-04, CAL-05: Terminal-guided two-point bounding box capture.
+
+    Flow:
+      1. Countdown + capture top-left click
+      2. Countdown + capture bottom-right click
+      3. Print captured coordinates: "(x1, y1) -> (x2, y2)"
+      4. Wait 2 seconds for user to review
+      5. Auto-proceed (set state.bbox)
+
+    No redo — misclick requires Ctrl+C and re-run.
+    """
+    countdown = state.config.get("calibration", {}).get("countdown_seconds", 3)
+
+    print("\n--- Calibration ---")
+    print("You will click two corners to define the painting canvas.")
+    print("No redo: if you misclick, press Ctrl+C and re-run.\n")
+
+    x1, y1 = capture_click_position("top-left corner", countdown)
+    x2, y2 = capture_click_position("bottom-right corner", countdown)
+
+    print(f"\nCaptured bounding box: ({x1}, {y1}) -> ({x2}, {y2})")
+    print("Proceeding in 2 seconds...")
+    time.sleep(2)
+
+    state.bbox = (x1, y1, x2, y2)
+
+    if state.verbose:
+        print(f"[DEBUG] Bounding box set: {state.bbox}")
+        print(f"[DEBUG] Width: {x2 - x1}px, Height: {y2 - y1}px")
 
 
 # === MAIN ===
