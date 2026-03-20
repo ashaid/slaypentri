@@ -335,6 +335,23 @@ def run_image_pipeline(state: AppState) -> None:
 
 # === PREVIEW ===
 
+def estimate_painting_time(contours: list, config: dict) -> float:
+    """CAL-03: Estimate total painting time in seconds from contour data and config.
+
+    Formula: start_delay + (total_points * inter_point_delay) + (num_strokes * inter_stroke_delay)
+    Per D-01, D-03: uses the user's actual config values so the estimate is meaningful.
+    """
+    painting = config.get("painting", {})
+    start_delay = painting.get("start_delay", 3)
+    inter_point = painting.get("inter_point_delay", 0)
+    inter_stroke = painting.get("inter_stroke_delay", 0.05)
+
+    total_points = sum(len(c) for c in contours)
+    num_strokes = len(contours)
+
+    return start_delay + (total_points * inter_point) + (num_strokes * inter_stroke)
+
+
 def run_preview(state: AppState) -> None:
     """CAL-01, CAL-02: Show detected contours in an OpenCV window on a black canvas.
 
@@ -386,7 +403,15 @@ def run_preview(state: AppState) -> None:
         # cv2.polylines requires shape (N, 1, 2)
         cv2.polylines(canvas, [pixel_pts.reshape(-1, 1, 2)], isClosed=False, color=color, thickness=1)
 
-    print(f"Preview ready. {n} contours detected.")
+    est = estimate_painting_time(contours, state.config)
+    total_points = sum(len(c) for c in contours)
+    if est < 60:
+        time_str = f"~{est:.0f}s"
+    else:
+        mins = int(est // 60)
+        secs = int(est % 60)
+        time_str = f"~{mins}m {secs}s"
+    print(f"Preview ready. {n} contours, {total_points} points. Estimated painting time: {time_str}")
     print("Press any key to continue, Esc to abort.")
 
     cv2.imshow("Contour Preview", canvas)
