@@ -46,10 +46,10 @@ Plans:
   3. Pressing Esc during painting stops all mouse movement within one stroke and releases the mouse button before exiting
   4. The terminal prints stroke progress (e.g., "Stroke 42/200 — 21%") during painting
   5. On all exit paths — normal completion, Esc abort, and unhandled exception — mouseUp is called before the process ends
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
-- [ ] 02-01-PLAN.md — Wave 1: Coordinate mapping and contour sorting (compute_draw_region, map_contour_to_screen, sort_contours_nearest_neighbor + tests)
+- [x] 02-01-PLAN.md — Wave 1: Coordinate mapping and contour sorting (compute_draw_region, map_contour_to_screen, sort_contours_nearest_neighbor + tests)
 - [ ] 02-02-PLAN.md — Wave 2: Replay engine with abort, progress, and main() wiring (run_replay, _start_abort_listener, _print_progress + human verify)
 
 ### Phase 3: UX Polish and Docs
@@ -71,5 +71,5 @@ Phases execute in numeric order: 1 → 2 → 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Image Pipeline and Safety | 4/4 | Complete   | 2026-03-20 |
-| 2. Coordinate Mapping and Replay | 0/2 | Planned | - |
+| 2. Coordinate Mapping and Replay | 1/2 | In Progress|  |
 | 3. UX Polish and Docs | 0/? | Not started | - |

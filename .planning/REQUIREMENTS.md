@@ -23,7 +23,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **CAL-03**: Preview shows contour count and estimated painting time
 - [x] **CAL-04**: Terminal-guided capture mode: user clicks top-left then bottom-right to define canvas bounding box
 - [x] **CAL-05**: Tool displays captured bounding box coordinates for confirmation before proceeding
-- [ ] **CAL-06**: Tool maps contour coordinates to screen space preserving aspect ratio (no stretching)
+- [x] **CAL-06**: Tool maps contour coordinates to screen space preserving aspect ratio (no stretching)
 - [ ] **CAL-07**: Configurable countdown delay before first stroke begins
 
 ### Painting & Control
@@ -31,8 +31,8 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **PAINT-01**: Tool replays each contour as right-click mouseDown → moveTo sequence → mouseUp
 - [ ] **PAINT-02**: Mouse button for strokes is configurable (default: right)
 - [ ] **PAINT-03**: Inter-point delay is configurable for stroke speed tuning
-- [ ] **PAINT-04**: Contours are sorted by spatial proximity (nearest-neighbor) to minimize travel
-- [ ] **PAINT-05**: Tool picks optimal start-point (closest endpoint) for each contour
+- [x] **PAINT-04**: Contours are sorted by spatial proximity (nearest-neighbor) to minimize travel
+- [x] **PAINT-05**: Tool picks optimal start-point (closest endpoint) for each contour
 - [ ] **PAINT-06**: Esc hotkey aborts painting mid-stroke via background listener thread
 - [ ] **PAINT-07**: Tool prints stroke progress (N/M, percentage) to terminal during painting
 - [ ] **PAINT-08**: Tool calls mouseUp on all exit paths (normal, abort, exception)
@@ -89,13 +89,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CAL-03 | Phase 3 | Pending |
 | CAL-04 | Phase 1 | Complete |
 | CAL-05 | Phase 1 | Complete |
-| CAL-06 | Phase 2 | Pending |
+| CAL-06 | Phase 2 | Complete |
 | CAL-07 | Phase 2 | Pending |
 | PAINT-01 | Phase 2 | Pending |
 | PAINT-02 | Phase 2 | Pending |
 | PAINT-03 | Phase 2 | Pending |
-| PAINT-04 | Phase 2 | Pending |
-| PAINT-05 | Phase 2 | Pending |
+| PAINT-04 | Phase 2 | Complete |
+| PAINT-05 | Phase 2 | Complete |
 | PAINT-06 | Phase 2 | Pending |
 | PAINT-07 | Phase 2 | Pending |
 | PAINT-08 | Phase 2 | Pending |

@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Phase 2 context gathered
-last_updated: "2026-03-20T22:31:08.401Z"
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-03-20T22:48:23.785Z"
 progress:
   total_phases: 3
   completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
+  total_plans: 6
+  completed_plans: 5
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-19)
 
 **Core value:** Accurately trace detected contours as smooth, ordered mouse strokes within a user-defined screen bounding box
-**Current focus:** Phase 01 — image-pipeline-and-safety
+**Current focus:** Phase 02 — coordinate-mapping-and-replay
 
 ## Current Position
 
-Phase: 2
-Plan: Not started
+Phase: 02 (coordinate-mapping-and-replay) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -50,6 +50,7 @@ Plan: Not started
 | Phase 01 P02 | 7 | 2 tasks | 1 files |
 | Phase 01-image-pipeline-and-safety P03 | 4 | 2 tasks | 1 files |
 | Phase 01-image-pipeline-and-safety P04 | 25min | 3 tasks | 1 files |
+| Phase 02-coordinate-mapping-and-replay P01 | 2 | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -71,6 +72,8 @@ Recent decisions affecting current work:
 - [Phase 01-image-pipeline-and-safety]: approxPolyDP runs in pixel space before normalization so simplify_epsilon stays intuitive in px units
 - [Phase 01-image-pipeline-and-safety]: Intercept 'auto' sentinel in run_image_pipeline before cv2.Canny — not at config-load time
 - [Phase 01-image-pipeline-and-safety]: Lazy import pyautogui/pynput at module level via try/except: avoids Xlib crash before check_display_environment runs on Wayland-only sessions
+- [Phase 02-01]: compute_draw_region returns floats (not ints) — caller converts at map time to avoid accumulated rounding
+- [Phase 02-01]: Contour sort runs in normalized space before screen mapping — preserves float precision in O(n^2) distance loop
 
 ### Pending Todos
 
@@ -84,6 +87,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-20T22:31:08.399Z
-Stopped at: Phase 2 context gathered
-Resume file: .planning/phases/02-coordinate-mapping-and-replay/02-CONTEXT.md
+Last session: 2026-03-20T22:48:23.782Z
+Stopped at: Completed 02-01-PLAN.md
+Resume file: None
