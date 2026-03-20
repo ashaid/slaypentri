@@ -39,24 +39,25 @@ key-decisions:
   - "Contour length filter (len < 2) applied pre-map in list comprehension — avoids per-stroke check inside try block"
   - "mouseUp button kwarg used for both loop-exit and finally-exit — matches mouseDown call signature exactly"
   - "progress newline printed via leading \\n in final message — keeps _print_progress() stateless"
+  - "bbox min/max normalization in compute_draw_region — click-corner order never matters (Rule 1 bug fix found during human verification)"
 
 requirements-completed: [CAL-07, PAINT-01, PAINT-02, PAINT-03, PAINT-06, PAINT-07, PAINT-08]
 
 # Metrics
-duration: ~3min (Task 1 only; Task 2 awaiting human verification)
+duration: ~25min (Task 1 automated + Task 2 human verification)
 completed: 2026-03-20
 ---
 
 # Phase 02 Plan 02: Replay Engine and Main Wiring Summary
 
-**Replay engine in painter.py — pyautogui stroke loop with countdown, nearest-neighbor sort, Esc abort via pynput daemon, inline progress bar, and guaranteed mouseUp via try/finally — awaiting end-to-end human verification**
+**pyautogui replay engine with countdown, Esc abort via pynput daemon, inline progress bar, guaranteed mouseUp via try/finally — verified end-to-end on real screen; bbox normalization bug fixed for any click-corner order**
 
 ## Performance
 
-- **Duration:** ~3 min (Task 1 complete; Task 2 is human-verify checkpoint)
+- **Duration:** ~25 min (Task 1 automated TDD + Task 2 human verification)
 - **Started:** 2026-03-20T22:49:36Z
-- **Completed (Task 1):** 2026-03-20T22:52:13Z
-- **Tasks:** 1 of 2 (Task 2 is human-verify gate)
+- **Completed:** 2026-03-20T23:05:00Z
+- **Tasks:** 2 of 2 (all complete)
 - **Files modified:** 2
 
 ## Accomplishments
@@ -67,17 +68,19 @@ completed: 2026-03-20
 - Updated `_DEFAULTS` and `DEFAULT_CONFIG_CONTENT` with `start_delay: 3` and `inter_point_delay: 0`
 - Extended `main()` to call `run_replay(state)` after `run_calibration(state)`
 - 7 new tests added (18 total in test_coordinate_mapping.py, 40 total in suite — all green)
+- Fixed bbox normalization bug in `compute_draw_region` (min/max swap) — painting now works regardless of click-corner order
 
 ## Task Commits
 
 1. **Task 1 RED: Test scaffold** — `bccb014` (test)
 2. **Task 1 GREEN: Replay engine implementation** — `a105e72` (feat)
+3. **Task 2: Bbox normalization bug fix (found during human verification)** — `5d2a0e6` (fix)
 
 _TDD tasks have separate RED (test) and GREEN (implementation) commits per process._
 
 ## Files Created/Modified
 
-- `painter.py` — Added `# === REPLAY ENGINE ===` section (3 functions, ~130 lines); updated `_DEFAULTS`, `DEFAULT_CONFIG_CONTENT`, and `main()`
+- `painter.py` — Added `# === REPLAY ENGINE ===` section (3 functions, ~130 lines); updated `_DEFAULTS`, `DEFAULT_CONFIG_CONTENT`, and `main()`; fixed bbox normalization in `compute_draw_region` (lines 487-488)
 - `tests/test_coordinate_mapping.py` — Added 7 replay tests: dry_run, mouseup_on_exception, configurable_button, abort_flag_stops, progress_format, start_delay_default, inter_point_delay_default
 
 ## Decisions Made
@@ -88,11 +91,20 @@ _TDD tasks have separate RED (test) and GREEN (implementation) commits per proce
 
 ## Deviations from Plan
 
-None — plan executed exactly as written.
+### Auto-fixed Issues
 
-## Checkpoint Status
+**1. [Rule 1 - Bug] Fixed bbox normalization for click-order independence in compute_draw_region**
+- **Found during:** Task 2 (end-to-end human verification)
+- **Issue:** If user clicks bottom-right corner before top-left, bx1 > bx2 and by1 > by2, causing negative draw dimensions and no painting
+- **Fix:** Added `bx1, bx2 = min(bx1, bx2), max(bx1, bx2)` and `by1, by2 = min(by1, by2), max(by1, by2)` at entry of `compute_draw_region` (painter.py lines 487-488)
+- **Files modified:** painter.py
+- **Verification:** Human verified painting works end-to-end after fix; any click-corner order now produces correct results
+- **Committed in:** `5d2a0e6` (fix commit)
 
-**Task 2 (human-verify) is pending.** Awaiting end-to-end visual verification of painting pipeline on a real screen.
+---
+
+**Total deviations:** 1 auto-fixed (Rule 1 - bug)
+**Impact on plan:** Fix is essential for usability — without it, clicking bottom-right before top-left silently produces no painting. No scope creep.
 
 ## Known Stubs
 
@@ -100,7 +112,8 @@ None — all functions are fully wired. `run_replay` is connected to `main()` an
 
 ## Self-Check: PASSED
 
-- `painter.py` exists and contains `def run_replay`, `def _start_abort_listener`, `def _print_progress`, `# === REPLAY ENGINE ===`, `start_delay`, `inter_point_delay`, `run_replay(state)` in main, `finally`
+- `painter.py` exists and contains `def run_replay`, `def _start_abort_listener`, `def _print_progress`, `# === REPLAY ENGINE ===`, `start_delay`, `inter_point_delay`, `run_replay(state)` in main, `finally`, bbox min/max normalization
 - `tests/test_coordinate_mapping.py` has 18 test functions
-- Commits `bccb014` (RED) and `a105e72` (GREEN) both exist
+- Commits `bccb014` (RED), `a105e72` (GREEN), and `5d2a0e6` (bbox fix) all exist
 - `pytest tests/ -x -q` → 40 passed
+- Task 2 human verification: APPROVED
