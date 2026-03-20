@@ -483,6 +483,9 @@ def compute_draw_region(bbox: tuple, img_w: int, img_h: int) -> tuple:
         Caller converts to int at point-mapping time to avoid accumulated rounding error.
     """
     bx1, by1, bx2, by2 = bbox
+    # Normalize so (bx1, by1) is always top-left regardless of click order
+    bx1, bx2 = min(bx1, bx2), max(bx1, bx2)
+    by1, by2 = min(by1, by2), max(by1, by2)
     bbox_w = bx2 - bx1
     bbox_h = by2 - by1
     img_aspect = img_w / img_h
