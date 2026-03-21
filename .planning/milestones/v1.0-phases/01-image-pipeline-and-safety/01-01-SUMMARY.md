@@ -109,6 +109,18 @@ None - no external service configuration required.
 - Install dependencies before running tests: `pip install -r requirements.txt`
 - Run tests: `pytest tests/ -x -q` — all tests will show as skipped until painter.py exists
 
+## Self-Check: PASSED
+
+- FOUND: requirements.txt
+- FOUND: tests/conftest.py
+- FOUND: tests/test_config.py
+- FOUND: tests/test_safety.py
+- FOUND: tests/test_image_pipeline.py
+- FOUND: 01-01-SUMMARY.md
+- FOUND commit: d0136fc (Task 1)
+- FOUND commit: 8e70dd4 (Task 2)
+- FOUND commit: fcfedd5 (Task 3)
+
 ---
 *Phase: 01-image-pipeline-and-safety*
 *Completed: 2026-03-20*
