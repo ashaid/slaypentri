@@ -9,13 +9,13 @@ Built for painting map contours in Slay the Spire 2's map editor, but works with
 ## Requirements
 
 - Python 3.10+
-- Linux with X11 or XWayland (pure Wayland is not supported)
+- Linux (X11 or Wayland with XWayland — most desktops work out of the box)
 - Dependencies: OpenCV, NumPy, PyYAML, pyautogui, pynput
 
 ## Installation
 
 ```bash
-git clone <repo-url> && cd slaypentri
+git clone https://github.com/ashaid/slaypentri.git && cd slaypentri
 pip install -r requirements.txt
 ```
 
@@ -36,7 +36,9 @@ python painter.py examples/simple_star.png
 
 ## Preview
 
-![Preview](examples/preview_star.png)
+| Input | Detected Contours |
+|:---:|:---:|
+| ![Input](examples/simple_star.png) | ![Preview](examples/preview_star.png) |
 
 ## Usage
 
@@ -100,7 +102,11 @@ This loads the included star pattern, shows a preview with contour count and est
 
 | Error | Solution |
 |-------|----------|
-| `Error: This tool requires an X11 session` | You are on pure Wayland. Switch to X11 or set `DISPLAY=:0` with XWayland |
+| `Error: This tool requires an X11 session` | Your session has no `DISPLAY` set. Enable XWayland or run under X11 |
 | `No contours detected` | Try `canny_low: auto` or lower threshold values |
 | `Error: Image file not found` | Check the image path is correct and the file exists |
 | Mouse moves but nothing paints | Check if the target app uses right-click for drawing; try `mouse_button: left` |
+
+## License
+
+MIT
