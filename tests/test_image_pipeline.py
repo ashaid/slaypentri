@@ -291,12 +291,14 @@ def test_deduplicate_empty_list():
 
 def test_deduplicate_keeps_longer_contour():
     """deduplicate_contours keeps the longer contour when merging a near-duplicate pair."""
-    # c_long has more points (longer arc), c_short is 2px away (short)
-    c_long = _make_contour([(0, 10), (10, 10), (20, 10), (30, 10), (40, 10), (50, 10), (60, 10)])
-    c_short = _make_contour([(10, 12), (30, 12), (50, 12)])  # 2px away, fewer points
+    # c_long has more points (longer arc), c_short is 2px away (same x span, dense sampling)
+    # Use dense enough points so sampled distances stay well below merge_distance_px=5
+    c_long = _make_contour([(10, 10), (15, 10), (20, 10), (25, 10), (30, 10),
+                             (35, 10), (40, 10), (45, 10), (50, 10)])  # 9 points
+    c_short = _make_contour([(10, 12), (20, 12), (30, 12), (40, 12), (50, 12)])  # 2px offset
     result = deduplicate_contours([c_long, c_short], merge_distance_px=5)
     assert len(result) == 1, "Should merge to 1 contour"
-    # The kept contour should be the longer one (c_long has 7 points)
+    # The kept contour should be the longer one (c_long has 9 points)
     assert len(result[0]) >= len(c_short), "Longer contour must be kept"
 
 

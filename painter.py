@@ -63,6 +63,7 @@ edge_detection:
   canny_high: 150            # Canny high threshold (0-255, or "auto" for Otsu-based). Higher = fewer weak edges kept.
   min_contour_px: 10         # Minimum contour arc-length in pixels (0+). Increase to discard small noise contours.
   simplify_epsilon: 1.5      # Douglas-Peucker simplification in pixels (0.0-10.0). Higher = fewer points, coarser lines.
+  merge_distance_px: 5       # Merge distance in pixels (0 = disabled). Contours closer than this are merged, keeping the longest.
 
 calibration:
   countdown_seconds: 3       # Seconds before each calibration click (1-10). Time to position your cursor.
@@ -82,6 +83,7 @@ _DEFAULTS = {
         "canny_high": 150,
         "min_contour_px": 10,
         "simplify_epsilon": 1.5,
+        "merge_distance_px": 5,
     },
     "calibration": {
         "countdown_seconds": 3,
@@ -268,6 +270,67 @@ def contour_color_bgr(index: int, total: int) -> tuple:
     return int(bgr[0]), int(bgr[1]), int(bgr[2])
 
 
+def deduplicate_contours(contours: list, merge_distance_px: float) -> list:
+    """IMG-07: Remove near-duplicate contours caused by thick lines in the input image.
+
+    Thick lines produce two parallel contours from Canny edge detection (one per edge).
+    This function merges pairs that are close together, keeping only the longer one.
+
+    Algorithm:
+      1. If merge_distance_px <= 0, return contours unchanged (feature disabled).
+      2. For each pair (i, j) where both are still kept:
+         - Sample up to 10 evenly-spaced points on contour i.
+         - Compute the mean minimum distance from those sample points to contour j.
+         - If mean distance < merge_distance_px, mark the shorter contour as not-kept.
+      3. Return only kept contours.
+
+    Args:
+        contours: List of OpenCV contours (each shape (N, 1, 2) or (N, 2), int32), in pixel space.
+        merge_distance_px: Distance threshold in pixels. 0 or negative disables deduplication.
+
+    Returns:
+        Filtered list with near-duplicate contours removed (shorter of each pair discarded).
+    """
+    if merge_distance_px <= 0 or len(contours) == 0:
+        return list(contours)
+
+    # Pre-compute arc lengths for all contours (used to decide which to keep when merging)
+    arc_lengths = [cv2.arcLength(c, closed=False) for c in contours]
+
+    keep = [True] * len(contours)
+
+    for i in range(len(contours)):
+        if not keep[i]:
+            continue
+        # Get evenly-spaced sample points from contour i (up to 10)
+        pts_i = contours[i].reshape(-1, 2).astype(np.float32)
+        n_samples = min(10, len(pts_i))
+        indices = np.linspace(0, len(pts_i) - 1, n_samples, dtype=int)
+        sample_pts = pts_i[indices]
+
+        for j in range(i + 1, len(contours)):
+            if not keep[j]:
+                continue
+            pts_j = contours[j].reshape(-1, 2).astype(np.float32)
+
+            # For each sample point on i, compute min distance to any point in j
+            # Using vectorized computation: broadcast (n_samples, 1, 2) vs (1, len_j, 2)
+            diffs = sample_pts[:, np.newaxis, :] - pts_j[np.newaxis, :, :]  # (n_samples, len_j, 2)
+            sq_dists = np.sum(diffs ** 2, axis=2)                            # (n_samples, len_j)
+            min_dists = np.sqrt(np.min(sq_dists, axis=1))                   # (n_samples,)
+            mean_dist = float(np.mean(min_dists))
+
+            if mean_dist < merge_distance_px:
+                # Mark the shorter contour as not-kept
+                if arc_lengths[i] >= arc_lengths[j]:
+                    keep[j] = False
+                else:
+                    keep[i] = False
+                    break  # i is dropped; skip remaining j comparisons
+
+    return [c for c, k in zip(contours, keep) if k]
+
+
 def run_image_pipeline(state: AppState) -> None:
     """IMG-01..06: Full image processing pipeline.
 
@@ -322,12 +385,15 @@ def run_image_pipeline(state: AppState) -> None:
         if cv2.arcLength(c, closed=False) >= min_len
     ]
 
+    merge_dist = state.config["edge_detection"]["merge_distance_px"]
+    deduped = deduplicate_contours(filtered, merge_dist)
+
     if state.verbose:
-        print(f"[DEBUG] Raw contours: {len(raw_contours)}, after filter: {len(filtered)}")
+        print(f"[DEBUG] Raw contours: {len(raw_contours)}, after filter: {len(filtered)}, after dedup: {len(deduped)}")
 
     # Normalize each contour to [0, 1] coordinates for resolution-independent downstream use
     state.contours_normalized = [
-        normalize_contour(c, w, h) for c in filtered
+        normalize_contour(c, w, h) for c in deduped
     ]
 
     print(f"Detected {len(state.contours_normalized)} contours.")
