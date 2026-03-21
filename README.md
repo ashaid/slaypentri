@@ -1,5 +1,7 @@
 # STS2 Map Painter
 
+[![Tests](https://github.com/ashaid/slaypentri/actions/workflows/tests.yml/badge.svg)](https://github.com/ashaid/slaypentri/actions/workflows/tests.yml)
+
 Traces image contours as mouse strokes within a screen bounding box. Load a PNG, preview detected edges, click two corners to define your canvas, and the tool replays every contour as a mouse-driven brush stroke.
 
 Built for painting map contours in Slay the Spire 2's map editor, but works with any application that accepts mouse input.
@@ -34,7 +36,7 @@ python painter.py examples/simple_star.png
 
 ## Preview
 
-![Preview](test_preview.png)
+![Preview](examples/preview_star.png)
 
 ## Usage
 
