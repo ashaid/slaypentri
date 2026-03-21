@@ -95,6 +95,12 @@ None yet.
 - Optimal epsilon default is image-resolution-dependent; starting value of 1.5px needs validation against real STS2 images
 - Ideal inter_stroke_delay depends on target application responsiveness; safe default range is 0.05–0.1s
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260320-x2g | Contour deduplication — merge near-parallel duplicates | 2026-03-21 | 5e6ed3b | [260320-x2g](./quick/260320-x2g-reduce-contour-duplication-by-merging-ne/) |
+
 ## Session Continuity
 
 Last session: 2026-03-21T04:53:22.579Z
