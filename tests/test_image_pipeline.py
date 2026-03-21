@@ -10,6 +10,7 @@ try:
         run_image_pipeline,
         AppState,
         load_config,
+        deduplicate_contours,
     )
     PAINTER_AVAILABLE = True
 except ImportError:
@@ -249,3 +250,92 @@ def test_simplify_reduces_points(sample_png, tmp_config_path):
     total_raw = sum(len(c) for c in state_raw.contours_normalized)
     assert total_simplified <= total_raw, \
         "Simplified contours should have fewer or equal points than raw"
+
+
+# --- Contour deduplication ---
+
+def _make_contour(points):
+    """Helper: create an OpenCV-style (N, 1, 2) int32 contour from a list of (x, y) tuples."""
+    return np.array(points, dtype=np.int32).reshape(-1, 1, 2)
+
+
+def test_deduplicate_close_contours_merges_to_one():
+    """deduplicate_contours with two contours offset by 2px returns 1 contour (merge_distance_px=5)."""
+    c1 = _make_contour([(10, 10), (20, 10), (30, 10), (40, 10), (50, 10)])
+    c2 = _make_contour([(10, 12), (20, 12), (30, 12), (40, 12), (50, 12)])  # 2px offset
+    result = deduplicate_contours([c1, c2], merge_distance_px=5)
+    assert len(result) == 1, f"Expected 1 contour after merging near-duplicates, got {len(result)}"
+
+
+def test_deduplicate_far_contours_keeps_both():
+    """deduplicate_contours with two contours offset by 50px returns 2 contours (merge_distance_px=5)."""
+    c1 = _make_contour([(10, 10), (20, 10), (30, 10), (40, 10), (50, 10)])
+    c2 = _make_contour([(10, 60), (20, 60), (30, 60), (40, 60), (50, 60)])  # 50px offset
+    result = deduplicate_contours([c1, c2], merge_distance_px=5)
+    assert len(result) == 2, f"Expected 2 contours for far-apart pair, got {len(result)}"
+
+
+def test_deduplicate_disabled_returns_all():
+    """deduplicate_contours with merge_distance_px=0 returns all input contours unchanged."""
+    c1 = _make_contour([(10, 10), (20, 10), (30, 10)])
+    c2 = _make_contour([(10, 11), (20, 11), (30, 11)])  # very close
+    result = deduplicate_contours([c1, c2], merge_distance_px=0)
+    assert len(result) == 2, "merge_distance_px=0 must disable deduplication"
+
+
+def test_deduplicate_empty_list():
+    """deduplicate_contours with empty list returns empty list."""
+    result = deduplicate_contours([], merge_distance_px=5)
+    assert result == [], "Empty input must return empty list"
+
+
+def test_deduplicate_keeps_longer_contour():
+    """deduplicate_contours keeps the longer contour when merging a near-duplicate pair."""
+    # c_long has more points (longer arc), c_short is 2px away (short)
+    c_long = _make_contour([(0, 10), (10, 10), (20, 10), (30, 10), (40, 10), (50, 10), (60, 10)])
+    c_short = _make_contour([(10, 12), (30, 12), (50, 12)])  # 2px away, fewer points
+    result = deduplicate_contours([c_long, c_short], merge_distance_px=5)
+    assert len(result) == 1, "Should merge to 1 contour"
+    # The kept contour should be the longer one (c_long has 7 points)
+    assert len(result[0]) >= len(c_short), "Longer contour must be kept"
+
+
+def test_deduplicate_pipeline_integration(thick_line_png, tmp_config_path):
+    """Pipeline with merge_distance_px=5 produces fewer contours than merge_distance_px=0 on thick-line image."""
+    import yaml
+    base_config = {
+        "edge_detection": {
+            "blur_kernel_size": 3,
+            "canny_low": 30,
+            "canny_high": 100,
+            "min_contour_px": 1,
+            "simplify_epsilon": 0.5,
+            "merge_distance_px": 0,  # dedup OFF
+        }
+    }
+
+    with open(tmp_config_path, "w") as f:
+        yaml.dump(base_config, f)
+    state_no_dedup = AppState()
+    state_no_dedup.image_path = thick_line_png
+    state_no_dedup.config_path = tmp_config_path
+    state_no_dedup.verbose = False
+    load_config(state_no_dedup)
+    run_image_pipeline(state_no_dedup)
+    count_no_dedup = len(state_no_dedup.contours_normalized)
+
+    base_config["edge_detection"]["merge_distance_px"] = 5  # dedup ON
+    with open(tmp_config_path, "w") as f:
+        yaml.dump(base_config, f)
+    state_dedup = AppState()
+    state_dedup.image_path = thick_line_png
+    state_dedup.config_path = tmp_config_path
+    state_dedup.verbose = False
+    load_config(state_dedup)
+    run_image_pipeline(state_dedup)
+    count_dedup = len(state_dedup.contours_normalized)
+
+    assert count_dedup < count_no_dedup, (
+        f"Dedup should reduce contour count on thick-line image: "
+        f"no_dedup={count_no_dedup}, dedup={count_dedup}"
+    )

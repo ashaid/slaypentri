@@ -61,3 +61,19 @@ def mock_x11_env(monkeypatch):
     """Sets only DISPLAY — pure X11 session."""
     monkeypatch.delenv("WAYLAND_DISPLAY", raising=False)
     monkeypatch.setenv("DISPLAY", ":0")
+
+
+@pytest.fixture
+def thick_line_png(tmp_path):
+    """Creates a 100x100 PNG with a 10px-wide white horizontal line on black background.
+
+    A thick line produces two parallel edge contours from Canny (one per edge of the line),
+    which is the main use case for contour deduplication.
+    """
+    import cv2
+    img = np.zeros((100, 100, 3), dtype=np.uint8)
+    # Draw a 10px-wide white horizontal line (y=45 to y=55)
+    img[45:55, 10:90] = 255
+    path = str(tmp_path / "thick_line.png")
+    cv2.imwrite(path, img)
+    return path
