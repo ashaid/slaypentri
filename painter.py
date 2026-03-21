@@ -88,7 +88,7 @@ _DEFAULTS = {
         "canny_high": 150,
         "min_contour_px": 10,
         "simplify_epsilon": 1.5,
-        "merge_distance_px": 5,
+        "merge_distance_px": 8,
     },
     "calibration": {
         "countdown_seconds": 3,

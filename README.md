@@ -1,6 +1,7 @@
 # STS2 Map Painter
 
 [![Tests](https://github.com/ashaid/slaypentri/actions/workflows/tests.yml/badge.svg)](https://github.com/ashaid/slaypentri/actions/workflows/tests.yml)
+[![GitHub stars](https://img.shields.io/github/stars/ashaid/slaypentri)](https://github.com/ashaid/slaypentri/stargazers)
 
 Traces image contours as mouse strokes within a screen bounding box. Load a PNG, preview detected edges, click two corners to define your canvas, and the tool replays every contour as a mouse-driven brush stroke.
 
