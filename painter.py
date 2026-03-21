@@ -15,6 +15,11 @@ import argparse
 from dataclasses import dataclass, field
 from typing import List, Optional
 
+# Suppress Qt font/platform warnings from OpenCV's Qt backend before importing cv2.
+# On Wayland+XWayland, Qt emits noisy warnings about fonts and session type.
+os.environ.setdefault("QT_LOGGING_RULES", "qt.qpa.*=false")
+os.environ.setdefault("QT_QPA_PLATFORM", "xcb")
+
 import numpy as np
 import cv2
 import yaml
