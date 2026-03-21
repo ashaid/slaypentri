@@ -109,4 +109,4 @@ This loads the included star pattern, shows a preview with contour count and est
 
 ## License
 
-MIT
+AGPL-3.0
