@@ -23,12 +23,14 @@ Accurately trace detected contours as smooth, ordered mouse strokes within a use
 - [x] Normalize contour coordinates to 0–1 range and map to screen pixel space via reference bounding box — Validated in Phase 2
 - [x] Replay each contour as mouseDown → moveTo sequence → mouseUp with configurable delay — Validated in Phase 2
 - [x] Esc hotkey listener to abort mid-painting — Validated in Phase 2
+- [x] Preview time estimate showing contour count and estimated painting duration — Validated in Phase 3
+- [x] Config file annotated with value ranges for all parameters — Validated in Phase 3
+- [x] README with installation, usage docs, and config reference — Validated in Phase 3
+- [x] Example PNG for new users — Validated in Phase 3
 
 ### Active
 
-- [ ] README with usage docs and example images
-- [ ] Sample config file(s) with sensible defaults
-- [ ] Example PNG(s) for testing
+(none — all v1.0 requirements validated)
 
 ### Out of Scope
 
@@ -65,4 +67,4 @@ Accurately trace detected contours as smooth, ordered mouse strokes within a use
 | Lazy pyautogui/pynput imports | Module-level import crashes when DISPLAY is unset; lazy import allows safety check first | Implemented Phase 1 |
 
 ---
-*Last updated: 2026-03-20 after Phase 2 completion*
+*Last updated: 2026-03-20 after Phase 3 completion — all v1.0 milestones complete*
