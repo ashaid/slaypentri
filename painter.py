@@ -70,6 +70,12 @@ edge_detection:
   simplify_epsilon: 1.5      # Douglas-Peucker simplification in pixels (0.0-10.0). Higher = fewer points, coarser lines.
   merge_distance_px: 5       # Merge distance in pixels (0 = disabled). Contours closer than this are merged, keeping the longest.
 
+fill:
+  spacing: 8                 # Perpendicular distance between fill lines in pixels (1-50). Lower = denser hatching.
+  angle: 45                  # Angle of fill lines in degrees. 0 = horizontal, 45 = diagonal hatching.
+  min_run_px: 5              # Minimum run length in pixels to create a fill stroke.
+  step_px: 5                 # Pixels between points within a fill stroke (1-50). Lower = slower mouse, more reliable fill.
+
 calibration:
   countdown_seconds: 3       # Seconds before each calibration click (1-10). Time to position your cursor.
 
@@ -89,6 +95,12 @@ _DEFAULTS = {
         "min_contour_px": 10,
         "simplify_epsilon": 1.5,
         "merge_distance_px": 8,
+    },
+    "fill": {
+        "spacing": 8,
+        "angle": 45,
+        "min_run_px": 5,
+        "step_px": 5,
     },
     "calibration": {
         "countdown_seconds": 3,
@@ -122,9 +134,11 @@ class AppState:
     image_path: str = ""
     config_path: str = ""
     contours_normalized: List[np.ndarray] = field(default_factory=list)
+    fill_strokes_normalized: List[np.ndarray] = field(default_factory=list)
     bbox: Optional[tuple] = None          # (x1, y1, x2, y2) screen pixels
     abort_flag: threading.Event = field(default_factory=threading.Event)
     dry_run: bool = False
+    fill: bool = False
     verbose: bool = False
 
 
@@ -194,6 +208,10 @@ def parse_cli(state: AppState) -> None:
         help="Path to YAML config file (default: config.yaml next to painter.py)"
     )
     parser.add_argument(
+        "--fill", action="store_true",
+        help="Generate fill strokes for colored regions (not just outlines)"
+    )
+    parser.add_argument(
         "--dry-run", action="store_true",
         help="Run pipeline and calibration but skip painting entirely"
     )
@@ -204,6 +222,7 @@ def parse_cli(state: AppState) -> None:
     args = parser.parse_args()
 
     state.image_path = args.image
+    state.fill = args.fill
     state.dry_run = args.dry_run
     state.verbose = args.verbose
 
@@ -249,6 +268,31 @@ def compute_otsu_thresholds(blurred_gray: np.ndarray) -> tuple:
     return low, high
 
 
+def densify_contour(contour: np.ndarray, max_gap_px: float = 5.0) -> np.ndarray:
+    """Insert intermediate points so no segment exceeds max_gap_px pixels.
+
+    Prevents the mouse from teleporting along long straight segments (e.g., the left
+    wall of a flag), which target apps may not register.
+
+    Input/output shape: (N, 1, 2) or (N, 2) int32, pixel space.
+    """
+    pts = contour.reshape(-1, 2).astype(np.float64)
+    if len(pts) < 2:
+        return contour
+
+    result = [pts[0]]
+    for i in range(1, len(pts)):
+        seg = pts[i] - pts[i - 1]
+        dist = np.sqrt(seg[0] ** 2 + seg[1] ** 2)
+        if dist > max_gap_px:
+            n_sub = int(np.ceil(dist / max_gap_px))
+            for j in range(1, n_sub):
+                result.append(pts[i - 1] + seg * (j / n_sub))
+        result.append(pts[i])
+
+    return np.array(result, dtype=np.int32).reshape(-1, 1, 2)
+
+
 def normalize_contour(contour: np.ndarray, img_w: int, img_h: int) -> np.ndarray:
     """IMG-06 + coordinate math: Convert pixel contour to normalized [0, 1] coordinates.
 
@@ -261,6 +305,19 @@ def normalize_contour(contour: np.ndarray, img_w: int, img_h: int) -> np.ndarray
     pts = contour.reshape(-1, 2).astype(np.float32)
     pts[:, 0] = pts[:, 0] / img_w   # x / width
     pts[:, 1] = pts[:, 1] / img_h   # y / height
+    return pts
+
+
+def normalize_contour_with_offset(contour: np.ndarray, img_w: int, img_h: int, offset: int) -> np.ndarray:
+    """Convert pixel contour to normalized [0, 1] coordinates, subtracting a border offset first.
+
+    Used when the image was padded before edge detection — contour pixel coords are in the
+    padded image space, so we subtract the offset to get back to original image coords.
+    Values are clamped to [0, 1] to avoid out-of-bounds from the border itself.
+    """
+    pts = contour.reshape(-1, 2).astype(np.float32)
+    pts[:, 0] = np.clip((pts[:, 0] - offset) / img_w, 0.0, 1.0)
+    pts[:, 1] = np.clip((pts[:, 1] - offset) / img_h, 0.0, 1.0)
     return pts
 
 
@@ -336,6 +393,129 @@ def deduplicate_contours(contours: list, merge_distance_px: float) -> list:
     return [c for c, k in zip(contours, keep) if k]
 
 
+def generate_fill_strokes(img: np.ndarray, config: dict, verbose: bool = False) -> list:
+    """Generate angled hatching strokes to fill non-background colored regions.
+
+    Algorithm:
+      1. Convert image to HSV.
+      2. Create a mask of "colorful" pixels (saturation > 30 AND value > 30).
+      3. Generate parallel lines at the configured angle across the image.
+      4. For each line, walk pixel-by-pixel, check the mask, find contiguous runs.
+      5. Each run becomes a multi-point stroke with intermediate points every step_px.
+
+    Config keys (under "fill"):
+      spacing:  perpendicular distance between lines in pixels (default 8)
+      angle:    degrees from horizontal, 0=horizontal, 45=diagonal hatching (default 45)
+      step_px:  pixels between points within a stroke (default 5)
+      min_run_px: minimum run length in pixels (default 5)
+
+    Returns:
+        List of (N, 2) float32 arrays in normalized [0, 1] coordinates.
+    """
+    import math
+
+    fill_cfg = config.get("fill", {})
+    spacing = max(1, fill_cfg.get("spacing", 8))
+    min_run = max(1, fill_cfg.get("min_run_px", 5))
+    step = max(1, fill_cfg.get("step_px", 5))
+    angle_deg = fill_cfg.get("angle", 45)
+
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    h, w = img.shape[:2]
+
+    # Mask: colorful pixels (saturation > 30, value > 30)
+    sat = hsv[:, :, 1]
+    val = hsv[:, :, 2]
+    mask = (sat > 30) & (val > 30)
+
+    angle_rad = math.radians(angle_deg)
+    cos_a = math.cos(angle_rad)
+    sin_a = math.sin(angle_rad)
+
+    # Normal vector (perpendicular to line direction)
+    nx, ny = -sin_a, cos_a
+
+    # Compute perpendicular offset range across all image corners
+    corners = [(0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)]
+    offsets = [cx * nx + cy * ny for cx, cy in corners]
+    d_min = min(offsets)
+    d_max = max(offsets)
+
+    strokes = []
+    d = d_min
+    while d <= d_max:
+        # A point on this line: p0 = d * normal
+        p0x = d * nx
+        p0y = d * ny
+
+        # Find t range where line (p0 + t * direction) is inside [0, w-1] x [0, h-1]
+        t_lo, t_hi = -1e9, 1e9
+
+        if abs(cos_a) > 1e-9:
+            tx0 = -p0x / cos_a
+            tx1 = (w - 1 - p0x) / cos_a
+            t_lo = max(t_lo, min(tx0, tx1))
+            t_hi = min(t_hi, max(tx0, tx1))
+        elif p0x < 0 or p0x > w - 1:
+            d += spacing
+            continue
+
+        if abs(sin_a) > 1e-9:
+            ty0 = -p0y / sin_a
+            ty1 = (h - 1 - p0y) / sin_a
+            t_lo = max(t_lo, min(ty0, ty1))
+            t_hi = min(t_hi, max(ty0, ty1))
+        elif p0y < 0 or p0y > h - 1:
+            d += spacing
+            continue
+
+        if t_lo >= t_hi:
+            d += spacing
+            continue
+
+        # Walk pixel-by-pixel along the line
+        line_len_px = int(t_hi - t_lo)
+        if line_len_px < min_run:
+            d += spacing
+            continue
+
+        ts = np.linspace(t_lo, t_hi, line_len_px + 1)
+        xs = np.clip((p0x + ts * cos_a).astype(int), 0, w - 1)
+        ys = np.clip((p0y + ts * sin_a).astype(int), 0, h - 1)
+
+        # Check mask at each pixel
+        on = mask[ys, xs]
+
+        # Find contiguous runs of True
+        padded = np.concatenate(([False], on, [False]))
+        diffs = np.diff(padded.astype(np.int8))
+        starts_arr = np.where(diffs == 1)[0]
+        ends_arr = np.where(diffs == -1)[0]
+
+        for s, e in zip(starts_arr, ends_arr):
+            if (e - s) >= min_run:
+                run_xs = xs[s:e].astype(np.float32)
+                run_ys = ys[s:e].astype(np.float32)
+                # Subsample to step interval
+                indices = np.arange(0, len(run_xs), step)
+                if indices[-1] != len(run_xs) - 1:
+                    indices = np.append(indices, len(run_xs) - 1)
+                line = np.column_stack([
+                    run_xs[indices] / w,
+                    run_ys[indices] / h,
+                ])
+                strokes.append(line)
+
+        d += spacing
+
+    if verbose:
+        total_pts = sum(len(s) for s in strokes)
+        print(f"[DEBUG] Fill: {len(strokes)} strokes, {total_pts} points "
+              f"(angle={angle_deg}°, spacing={spacing}px, step={step}px)")
+
+    return strokes
+
+
 def run_image_pipeline(state: AppState) -> None:
     """IMG-01..06: Full image processing pipeline.
 
@@ -354,6 +534,23 @@ def run_image_pipeline(state: AppState) -> None:
         print(f"[DEBUG] Loaded image: {state.image_path}, shape={img.shape}")
 
     gray = to_grayscale(img)
+
+    # Pad with a 1px contrasting border so Canny detects edges at the image boundary.
+    # Sample the actual border pixels and pick black or white based on whichever has
+    # better worst-case contrast — median doesn't work when different edges have
+    # different colors (e.g., white canton + green border on the Esperanto flag).
+    border_pad = 1
+    top = gray[0, :]
+    bottom = gray[-1, :]
+    left = gray[:, 0]
+    right = gray[:, -1]
+    edge_pixels = np.concatenate([top, bottom, left, right])
+    contrast_black = int(edge_pixels.min())       # worst-case distance from 0
+    contrast_white = 255 - int(edge_pixels.max())  # worst-case distance from 255
+    border_color = 0 if contrast_black >= contrast_white else 255
+    gray = cv2.copyMakeBorder(gray, border_pad, border_pad, border_pad, border_pad,
+                              cv2.BORDER_CONSTANT, value=border_color)
+
     h, w = gray.shape[:2]
 
     blur_k = state.config["edge_detection"]["blur_kernel_size"]
@@ -371,6 +568,11 @@ def run_image_pipeline(state: AppState) -> None:
             print(f"[DEBUG] Otsu thresholds: low={low:.1f}, high={high:.1f}")
 
     edges = cv2.Canny(blurred, float(low), float(high))
+
+    # Close gaps in edges caused by JPEG compression artifacts.
+    # A 7x7 morphological close bridges larger breaks for high-res canvases.
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 7))
+    edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
 
     # IMG-04: RETR_LIST keeps all contours (not just outer); CHAIN_APPROX_NONE keeps all points
     raw_contours, _ = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
@@ -393,15 +595,27 @@ def run_image_pipeline(state: AppState) -> None:
     merge_dist = state.config["edge_detection"]["merge_distance_px"]
     deduped = deduplicate_contours(filtered, merge_dist)
 
+    # Densify: insert intermediate points on long straight segments so the mouse
+    # doesn't teleport past them (e.g., the left wall of a flag outline).
+    deduped = [densify_contour(c, max_gap_px=5.0) for c in deduped]
+
     if state.verbose:
         print(f"[DEBUG] Raw contours: {len(raw_contours)}, after filter: {len(filtered)}, after dedup: {len(deduped)}")
 
-    # Normalize each contour to [0, 1] coordinates for resolution-independent downstream use
+    # Normalize each contour to [0, 1] coordinates for resolution-independent downstream use.
+    # Subtract the border padding offset so coordinates map to the original image, not the padded one.
+    orig_w = w - 2 * border_pad
+    orig_h = h - 2 * border_pad
     state.contours_normalized = [
-        normalize_contour(c, w, h) for c in deduped
+        normalize_contour_with_offset(c, orig_w, orig_h, border_pad) for c in deduped
     ]
 
-    print(f"Detected {len(state.contours_normalized)} contours.")
+    # Generate fill strokes if --fill mode is active
+    if state.fill:
+        state.fill_strokes_normalized = generate_fill_strokes(img, state.config, state.verbose)
+        print(f"Detected {len(state.contours_normalized)} contours + {len(state.fill_strokes_normalized)} fill strokes.")
+    else:
+        print(f"Detected {len(state.contours_normalized)} contours.")
 
 
 # === PREVIEW ===
@@ -437,9 +651,11 @@ def run_preview(state: AppState) -> None:
       - Esc (key == 27): print "Aborted by user." and sys.exit(0)
     """
     contours = state.contours_normalized
+    fill_strokes = state.fill_strokes_normalized
     n = len(contours)
+    n_fill = len(fill_strokes)
 
-    if n == 0:
+    if n == 0 and n_fill == 0:
         print("No contours detected. Try lowering canny thresholds or increasing blur.")
         print("Hint: Set canny_low: auto in config.yaml to use automatic thresholding.")
         sys.exit(1)
@@ -468,21 +684,28 @@ def run_preview(state: AppState) -> None:
     canvas = np.zeros((canvas_h, canvas_w, 3), dtype=np.uint8)
 
     for i, norm_pts in enumerate(contours):
-        color = contour_color_bgr(i, n)
-        # Scale normalized [0,1] coords to canvas pixel coords
-        pixel_pts = (norm_pts * np.array([canvas_w, canvas_h])).astype(np.int32)
+        color = contour_color_bgr(i, n) if n > 0 else (255, 255, 255)
+        # Scale normalized [0,1] coords to canvas pixel coords (round, don't truncate)
+        pixel_pts = np.rint(norm_pts * np.array([canvas_w, canvas_h])).astype(np.int32)
         # cv2.polylines requires shape (N, 1, 2)
         cv2.polylines(canvas, [pixel_pts.reshape(-1, 1, 2)], isClosed=False, color=color, thickness=1)
 
-    est = estimate_painting_time(contours, state.config)
-    total_points = sum(len(c) for c in contours)
+    # Draw fill strokes in a dim green so they're visible but distinct from contours
+    for norm_pts in fill_strokes:
+        pixel_pts = np.rint(norm_pts * np.array([canvas_w, canvas_h])).astype(np.int32)
+        cv2.polylines(canvas, [pixel_pts.reshape(-1, 1, 2)], isClosed=False, color=(0, 140, 0), thickness=1)
+
+    all_strokes = list(contours) + list(fill_strokes)
+    est = estimate_painting_time(all_strokes, state.config)
+    total_points = sum(len(c) for c in all_strokes)
     if est < 60:
         time_str = f"~{est:.0f}s"
     else:
         mins = int(est // 60)
         secs = int(est % 60)
         time_str = f"~{mins}m {secs}s"
-    print(f"Preview ready. {n} contours, {total_points} points. Estimated painting time: {time_str}")
+    fill_info = f" + {n_fill} fill strokes" if n_fill > 0 else ""
+    print(f"Preview ready. {n} contours{fill_info}, {total_points} points. Estimated painting time: {time_str}")
     print("Press any key to continue, Esc to abort.")
 
     cv2.imshow("Contour Preview", canvas)
@@ -624,8 +847,8 @@ def map_contour_to_screen(
         (N, 2) int32 array of screen pixel coordinates.
     """
     screen = np.empty(norm_contour.shape, dtype=np.int32)
-    screen[:, 0] = (offset_x + norm_contour[:, 0] * draw_w).astype(np.int32)
-    screen[:, 1] = (offset_y + norm_contour[:, 1] * draw_h).astype(np.int32)
+    screen[:, 0] = np.rint(offset_x + norm_contour[:, 0] * draw_w).astype(np.int32)
+    screen[:, 1] = np.rint(offset_y + norm_contour[:, 1] * draw_h).astype(np.int32)
     return screen
 
 
@@ -738,7 +961,9 @@ def run_replay(state: "AppState") -> None:
     offset_x, offset_y, draw_w, draw_h = compute_draw_region(state.bbox, img_w, img_h)
 
     # PAINT-04, PAINT-05: sort contours in normalized space before screen mapping
-    sorted_contours = sort_contours_nearest_neighbor(state.contours_normalized)
+    # Combine contours and fill strokes — paint outlines first, then fill
+    all_normalized = list(state.contours_normalized) + list(state.fill_strokes_normalized)
+    sorted_contours = sort_contours_nearest_neighbor(all_normalized)
 
     # Map all contours to screen pixel arrays once (not per-stroke, Pitfall 5)
     screen_contours = [
