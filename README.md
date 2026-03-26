@@ -44,12 +44,13 @@ python painter.py examples/simple_star.png
 ## Usage
 
 ```bash
-python painter.py <image.png> [--config path/to/config.yaml] [--dry-run] [--verbose]
+python painter.py <image.png> [--fill] [--config path/to/config.yaml] [--dry-run] [--verbose]
 ```
 
 | Flag | Description |
 |------|-------------|
 | `image.png` | Path to input PNG image (required) |
+| `--fill` | Generate diagonal hatching strokes to fill colored regions |
 | `--config` | Path to YAML config file (default: `config.yaml` next to `painter.py`) |
 | `--dry-run` | Run pipeline and calibration but skip painting |
 | `--verbose` | Enable debug output |
@@ -90,6 +91,25 @@ The tool reads from `config.yaml` (auto-generated on first run). All parameters 
 - **Strokes not registering?** Increase `inter_stroke_delay` or `inter_point_delay`
 - **Wrong thresholds?** Set `canny_low: auto` and `canny_high: auto` for automatic detection
 - **Abort mid-paint:** Press Esc at any time to stop immediately
+
+## Fill Mode
+
+Use `--fill` to fill colored regions with diagonal hatching strokes, not just outlines.
+
+```bash
+python painter.py esperanto.jpg --fill
+```
+
+![In-game example of fill hatching on STS2 map](image.png)
+
+### Fill Configuration
+
+| Parameter | Default | Range | Description |
+|-----------|---------|-------|-------------|
+| `spacing` | `8` | 1-50 | Perpendicular distance between fill lines. Lower = denser hatching |
+| `angle` | `45` | 0-360 | Angle of fill lines in degrees. 0 = horizontal, 45 = diagonal |
+| `min_run_px` | `5` | 1+ | Minimum run length in pixels to create a fill stroke |
+| `step_px` | `5` | 1-50 | Pixels between points within a fill stroke. Lower = slower mouse, more reliable |
 
 ## Example
 
